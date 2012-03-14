@@ -1,7 +1,9 @@
 Java read video frame by frame. Java Media Framework project for reading video frame by frame.
 The JMF-source is obtained from http://ohmydear.tistory.com/31 and can only be used for educational purposes.
+Classes not available as source within the JMF-source are included in lib directory.
+I took the classes from cross-platform jmf 2.1.1e-version.
 Also includes jffmpeg-source http://jffmpeg.sourceforge.net/ to decode a few more codecs.
-As the program just reads through a video file and displays the frames.
+The program just reads through a video file and displays the frames.
 
 Compilation:
 ant (see compileMinimal.bat and build.xml to get started)
