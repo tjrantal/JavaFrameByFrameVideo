@@ -67,7 +67,7 @@
 		<!--
     <jar jarfile="${dist}/javaVideoAnalysis.jar" basedir="${classes}"/>
 		-->
-		<jar jarfile="javaVideoAnalysis.jar" basedir="${classes}"/>
+		<jar jarfile="javaVideoAnalysis.jar" basedir="${classes}" manifest="manifest/manifest.mf"/>
   </target>
   
   <target name="clean" description="Remove output files" >
