@@ -1,0 +1,29 @@
+Java port of Ogg Vorbis
+-----------------------
+
+The files in this directory and subdirectories are under a BSD-style
+license.  The license is the same as the original libvorbis library.  
+
+Note that to redistribute this library, you MUST correctly
+split this Codec out of the rest of JFFMPEG.  This is simple: remove
+any Class files that are not headed with the appropriate BSD copyright.
+
+The file VorbisDecoder.java has a dependency on the
+net.sourceforge.jffmpeg.JMFCodec interface.  As this class is not
+under the same license, the "import" and "implements" should be
+altered so that there is no requirement to use that class.  The
+implementations of JMFCodec methods in VorbisDecoder.java do not need
+to be removed (although you can do so).
+
+Once separated from the rest of JFFMPEG the Ogg Vorbis port is a
+stand-alone JMF Codec and Demultiplexer.
+
+
+Note that just as the OggVorbis files can be built and shipped
+independently of the rest of JFFMPEG, so the rest of JFFMPEG can be
+built and shipped without the OggVorbis codec.  
+
+The OggVorbis codecs and demultiplexers, and the other parts of
+jffmpeg are shipped as two completely separate components.  If in
+doubt, consult a lawyer.
+

@@ -1,0 +1,69 @@
+<!-- JFFMpeg ANT build system -->
+
+<project name="javaVideoAnalysis" default="jar" basedir=".">
+  <description>
+    Ant build system for javaVideoAnalysis
+  </description>
+
+  <!-- set global properties for this build -->
+  <property environment="env"/>
+  <property name="JAVA_HOME" location="${env.JAVA_HOME}" />
+  <!--
+  <property name="JMF_HOME" location="${env.JMF_HOME}" />
+	-->
+  <property name="javasrc" location="src" />
+  <property name="jmfsrc" location="jmfsrc" />
+  <property name="jmflib" location="libMinimal" />
+  <property name="build"   location="build" />
+  <property name="classes" location="build/java" />
+  <property name="dist"    location="build/dist" />
+
+  <!-- Classpath 
+  <path id="jmf.path">
+    <pathelement path="${JMF_HOME}/lib/jmf.jar"/>
+  </path>
+	-->
+  <!-- Initialize -->
+  <target name="init">
+    <tstamp/>
+
+    <!-- Echo values passed in so there's no confusion -->
+    <echo message="JAVA_HOME is ${JAVA_HOME}"/>
+
+    <mkdir dir="${build}" />
+    <mkdir dir="${classes}" />
+  </target>
+
+  <target name="precompile" depends="init" description="Copy properties" >
+    <copy todir="${classes}">
+      <fileset dir="${javasrc}" includes="**/*.properties"/>
+	  <fileset dir="${jmfsrc}" includes="**/*.properties"/>
+    </copy>
+  </target>
+
+    <target name="jmfcompile" depends="precompile" description="Compile JMF source" >
+    <javac source="1.4" srcdir="${jmfsrc}" destdir="${classes}" nowarn="on">
+		<!--<arg value="-Xmaxerrs 2 -Xlint:none"/>-->
+		<classpath> 
+			<pathelement path="${jmflib}"/>	  <!--Include jmf classpath here...-->
+		</classpath> 
+    </javac>
+  </target>
+  
+  <target name="javacompile" depends="jmfcompile" description="Compile Java source" >
+    <javac source="1.5" srcdir="${javasrc}" destdir="${classes}" nowarn="on">
+		<classpath> 
+			<pathelement path="${classes}"/> <!--Include jmf classpath & jars here...-->
+		</classpath>
+    </javac>
+  </target>
+
+  <target name="jar" depends="javacompile" description="Create Jar file" >
+    <mkdir dir="${dist}"/>
+    <jar jarfile="${dist}/javaVideoAnalysis.jar" basedir="${classes}"/>
+  </target>
+  
+  <target name="clean" description="Remove output files" >
+    <delete dir="${build}"/>
+  </target>
+</project>

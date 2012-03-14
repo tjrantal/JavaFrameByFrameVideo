@@ -1,0 +1,36 @@
+<!-- JFFMpeg ANT build system -->
+
+<project name="javaVideoAnalysis" default="javacompile" basedir=".">
+  <description>
+    Ant build system for javaVideoAnalysis
+  </description>
+
+  <!-- set global properties for this build -->
+  <property environment="env"/>
+  <property name="JAVA_HOME" location="${env.JAVA_HOME}" />
+  <!--
+  <property name="JMF_HOME" location="${env.JMF_HOME}" />
+	-->
+  <property name="javasrc" location="src/analysis" />
+  <property name="analysisClasses" location="build/java" />
+  <property name="jmfsrc" location="jmfsrc" />
+  <property name="jmflib" location="lib" />
+  <property name="build"   location="build" />
+  <property name="classes" location="build/java" />
+  <property name="dist"    location="build/dist" />
+
+  <!-- Classpath 
+  <path id="jmf.path">
+    <pathelement path="${JMF_HOME}/lib/jmf.jar"/>
+  </path>
+	-->
+  <!-- Initialize -->
+  
+  <target name="javacompile" description="Compile Java source" >
+    <javac source="1.4" srcdir="${javasrc}" destdir="${analysisClasses}" nowarn="on">
+		<classpath> 
+			<pathelement path="${classes}"/> <!--Include jmf classpath & jars here...-->
+		</classpath>
+    </javac>
+  </target>
+</project>

@@ -1,0 +1,128 @@
+# Jffmpeg configuration file
+# --------------------------
+#
+# This file manages all the installed codecs (native and Java).
+
+# The Native library name (and optional path)
+FFMpegNativeLibrary=jffmpeg
+
+# Supported audio and video types (as named by JMF)
+SupportedVideoFormats=h263,h263/RTP,DIV3,MPEG,mpeg video,DIVX,MP42,MPG4,WMV1,WMV2,MJPG,XVID,DX50
+SupportedAudioFormats=mpeglayer3,AC3,vorbis
+
+# Audio Codecs
+# ------------
+#  JavaClass  - Java class supporting format (optional)
+#  Class      - Native class supporting format
+#  Native     - [true|false] Use native class by default
+#  FFMpegName - Native library codec identifier
+
+mpeglayer3.JavaClass=net.sourceforge.jffmpeg.codecs.audio.mpeg.mp3.MP3
+mpeglayer3.Class=net.sourceforge.jffmpeg.ffmpegnative.NativeDecoder
+mpeglayer3.Native=false
+mpeglayer3.FFMpegName=mp3
+
+AC3.JavaClass=net.sourceforge.jffmpeg.codecs.audio.ac3.AC3Decoder
+AC3.Class=net.sourceforge.jffmpeg.ffmpegnative.NativeDecoder
+AC3.Native=false
+AC3.FFMpegName=ac3
+
+vorbis.JavaClass=net.sourceforge.jffmpeg.codecs.audio.vorbis.VorbisDecoder
+vorbis.Class=net.sourceforge.jffmpeg.ffmpegnative.NativeDecoder
+vorbis.Native=false
+vorbis.FFMpegName=vorbis
+
+# Video Codecs
+# ------------
+#  JavaClass   - Java class supporting format (optional)
+#  Class       - Native class supporting format
+#  Native      - [true|false] Use native class by default
+#  FFMpegName  - Native library codec identifier
+#  IsTruncated - Set true if demux packets are not splits into frames
+#  RTP         - Is a streamed protocol
+
+h263.Class=net.sourceforge.jffmpeg.ffmpegnative.NativeDecoder
+h263.Native=false
+h263.FFMpegName=h263
+h263.IsTruncated=false
+h263.RTP=false
+
+h263/RTP.Class=net.sourceforge.jffmpeg.ffmpegnative.NativeDecoder
+h263/RTP.Native=false
+h263/RTP.FFMpegName=h263
+h263/RTP.IsTruncated=false
+h263/RTP.RTP=true
+
+DIV3.JavaClass=net.sourceforge.jffmpeg.codecs.video.mpeg4.div3.Div3Codec
+DIV3.Class=net.sourceforge.jffmpeg.ffmpegnative.NativeDecoder
+DIV3.Native=false
+DIV3.FFMpegName=msmpeg4
+DIV3.IsTruncated=false
+DIV3.RTP=false
+
+MPEG.JavaClass=net.sourceforge.jffmpeg.codecs.video.mpeg12.MpegVideo
+MPEG.Class=net.sourceforge.jffmpeg.ffmpegnative.NativeDecoder
+MPEG.Native=false
+MPEG.FFMpegName=mpeg2video
+MPEG.IsTruncated=true
+MPEG.RTP=false
+
+mpeg video.JavaClass=net.sourceforge.jffmpeg.codecs.video.mpeg12.MpegVideo
+mpeg video.Class=net.sourceforge.jffmpeg.ffmpegnative.NativeDecoder
+mpeg video.Native=false
+mpeg video.FFMpegName=mpeg2video
+mpeg video.IsTruncated=true
+mpeg video.RTP=false
+
+DIVX.JavaClass=net.sourceforge.jffmpeg.codecs.video.mpeg4.divx.DIVXCodec
+DIVX.Class=net.sourceforge.jffmpeg.ffmpegnative.NativeDecoder
+DIVX.Native=false
+DIVX.FFMpegName=mpeg4
+DIVX.IsTruncated=false
+DIVX.RTP=false
+
+XVID.JavaClass=net.sourceforge.jffmpeg.codecs.video.mpeg4.divx.DIVXCodec
+XVID.Class=net.sourceforge.jffmpeg.ffmpegnative.NativeDecoder
+XVID.Native=false
+XVID.FFMpegName=mpeg4
+XVID.IsTruncated=false
+XVID.RTP=false
+
+DX50.JavaClass=net.sourceforge.jffmpeg.codecs.video.mpeg4.divx.DIVXCodec
+DX50.Class=net.sourceforge.jffmpeg.ffmpegnative.NativeDecoder
+DX50.Native=false
+DX50.FFMpegName=mpeg4
+DX50.IsTruncated=false
+DX50.RTP=false
+
+MP42.JavaClass=net.sourceforge.jffmpeg.codecs.video.mpeg4.mp42.MP42Codec
+MP42.Class=net.sourceforge.jffmpeg.ffmpegnative.NativeDecoder
+MP42.Native=false
+MP42.FFMpegName=msmpeg4v2
+MP42.IsTruncated=false
+MP42.RTP=false
+
+MPG4.JavaClass=net.sourceforge.jffmpeg.codecs.video.mpeg4.mpg4.MPG4Codec
+MPG4.Class=net.sourceforge.jffmpeg.ffmpegnative.NativeDecoder
+MPG4.Native=false
+MPG4.FFMpegName=msmpeg4v1
+MPG4.IsTruncated=false
+MPG4.RTP=false
+
+WMV1.Class=net.sourceforge.jffmpeg.ffmpegnative.NativeDecoder
+WMV1.Native=true
+WMV1.FFMpegName=wmv1
+WMV1.IsTruncated=false
+WMV1.RTP=false
+
+WMV2.Class=net.sourceforge.jffmpeg.ffmpegnative.NativeDecoder
+WMV2.Native=true
+WMV2.FFMpegName=wmv2
+WMV2.IsTruncated=false
+WMV2.RTP=false
+
+MJPG.Class=net.sourceforge.jffmpeg.ffmpegnative.NativeDecoder
+MJPG.Native=false
+MJPG.FFMpegName=mjpeg
+MJPG.IsTruncated=false
+MJPG.RTP=false
