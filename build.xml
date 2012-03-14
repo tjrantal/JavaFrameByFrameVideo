@@ -60,7 +60,14 @@
 
   <target name="jar" depends="javacompile" description="Create Jar file" >
     <mkdir dir="${dist}"/>
+    <!--Copy the proprietary classes to build dir--> 
+		<copy todir="${classes}">
+			<fileset dir="${jmflib}" includes="**/*.class"/>
+		</copy>
+		<!--
     <jar jarfile="${dist}/javaVideoAnalysis.jar" basedir="${classes}"/>
+		-->
+		<jar jarfile="javaVideoAnalysis.jar" basedir="${classes}"/>
   </target>
   
   <target name="clean" description="Remove output files" >
