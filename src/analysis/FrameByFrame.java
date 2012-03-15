@@ -79,6 +79,10 @@ public class FrameByFrame implements ControllerListener
 				System.exit(0);
 			}
 			writer = null;
+			deMultiplexer = null;
+			tracks = null;
+			buffer = null;
+			oBuf = null;
 		}
 	}
 	
@@ -218,18 +222,25 @@ public class FrameByFrame implements ControllerListener
 	}
 	
 	public void readFrame(int frameNo){
-		Time newTime = null;
+		Time currentTime = null;
+		Time targetTime = tracks[videoTrack].mapFrameToTime(frameNo);
 		try{
-			newTime = deMultiplexer.setPosition(new Time((double) frameNo/frameRate),javax.media.protocol.Positionable.RoundDown);
-		}catch(Exception err){System.out.println("Search failed"); System.exit(0);}
-		System.out.println("Searched successfully "+newTime.getSeconds());
+			currentTime = deMultiplexer.setPosition(targetTime,javax.media.protocol.Positionable.RoundDown);
+			}catch(Exception err){System.out.println("Search failed"); System.exit(0);}
+		System.out.println("Searched successfully "+currentTime.getSeconds()+" target "+targetTime.getSeconds());
 		try{
 			tracks[videoTrack].readFrame(buffer);
-			while((buffer.isDiscard() || buffer.getLength()==0) && !buffer.isEOM() && buffer.getSequenceNumber()<frameNo){
+			decoder.process(buffer,oBuf);
+			currentTime = new Time(buffer.getTimeStamp());
+			System.out.println("Time stamp "+currentTime.getSeconds()+" from buffer "+buffer.getTimeStamp());
+			while ((buffer.isDiscard() || buffer.getLength()==0 ||currentTime.getSeconds() < targetTime.getSeconds() )&& !buffer.isEOM()) { // && buffer.getSequenceNumber()<frameNo){
 				tracks[videoTrack].readFrame(buffer);
+				decoder.process(buffer,oBuf);
+				currentTime = new Time(buffer.getTimeStamp());
+				System.out.println("within loop "+currentTime.getSeconds()+" from buffer "+buffer.getTimeStamp());
 			}
 	   }catch(Exception err){System.out.println("ReadFrame failed"); System.exit(0);}
-	   System.out.println("Read Frame successfully "+buffer.getSequenceNumber());
+	   System.out.println("Time stamp after loop"+currentTime.getSeconds());
 	   if (!buffer.isEOM()){
 			decoder.process(buffer,oBuf);
 			frameData = (int[]) oBuf.getData();
