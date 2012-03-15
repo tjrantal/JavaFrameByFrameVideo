@@ -48,14 +48,36 @@ import ui.*;
 import javax.media.Time;	//For rewinding the video..
 public class FrameByFrame implements ControllerListener
 {
-	boolean goOn =false;
-	MpngWriter writer;
-	//H264Writer writer;
-	URL sourceVideo;
-	//URL targetVideo;
-	String targetVideo;
-	JavaVideoAnalysis mainProgram;
+	private boolean goOn =false;
+	private MpngWriter writer;
+	private URL sourceVideo;
+	private String targetVideo;
+	private JavaVideoAnalysis mainProgram;
+	private Demultiplexer deMultiplexer;
+	private Track[] tracks;
+	private int videoTrack;
+	private Codec decoder;
+	
+	/*Public vars*/
+	public int framesProcessed;
+	public float frameRate;
+	public Time duration;
+	public int frameCount;
+	public int[] frameData;
 	//public FrameByFrame(URL sourceVideo,File tempOutFile, JavaVideoAnalysis mainProgram){
+	public void close(){
+		decoder.close();
+		if (writer != null){
+			try{
+				writer.finalize_mjpeg();
+			}catch (Exception err){
+				System.out.println("Couldn't finalize");
+				System.exit(0);
+			}
+			writer = null;
+		}
+	}
+	
 	public FrameByFrame(URL sourceVideo,String targetVideo, JavaVideoAnalysis mainProgram){
 		this.sourceVideo = sourceVideo;
 		this.targetVideo = targetVideo;
@@ -118,15 +140,15 @@ public class FrameByFrame implements ControllerListener
 		try{
 			bsm = BasicSourceModule.createModule(dSource);
 		}catch(Exception err){System.out.println("SetSource failed"); System.exit(0);}
-		Demultiplexer aviParser = bsm.getDemultiplexer();
+		deMultiplexer = bsm.getDemultiplexer();
 		
 
 		
-		Track[] tracks = null;
+		tracks = null;
 		try{
-			tracks= aviParser.getTracks();
+			tracks= deMultiplexer.getTracks();
 		}catch(Exception err){System.out.println("GetTracks failed"); System.exit(0);}
-		int videoTrack = 0;
+		videoTrack = 0;
 		for (int i = 0; i< tracks.length; ++i){
 			if (tracks[i].getFormat() instanceof VideoFormat){
 				videoTrack = i;
@@ -136,22 +158,22 @@ public class FrameByFrame implements ControllerListener
 		}
 		
 		System.out.println("Encoding "+tracks[videoTrack].getFormat().getEncoding());
-		System.out.println("DeMultiplexer "+aviParser.toString());
+		System.out.println("DeMultiplexer "+deMultiplexer.toString());
 		
 		Dimension videoSize = null;
 		VideoFormat vf = (VideoFormat) tracks[videoTrack].getFormat();
 		videoSize =vf.getSize();
 		/*Check clip length*/
-		float frameRate = vf.getFrameRate();
-		Time duration = aviParser.getDuration();
-		int frameCount = (int) (duration.getSeconds()*frameRate);
+		frameRate = vf.getFrameRate();
+		duration = deMultiplexer.getDuration();
+		frameCount = (int) (duration.getSeconds()*frameRate);
 		System.out.println("Duration "+(duration.getSeconds())+" s Frames: "+frameCount+" frameRate "+frameRate);
 		System.out.println("TrackFrames "+tracks[videoTrack].mapTimeToFrame(tracks[videoTrack].getDuration()));
 
 		
 		System.out.println("Format "+tracks[videoTrack].getFormat().toString());
 		/*Create codecs for decoding, colorspace conversion and encoding*/
-		Codec decoder = SimpleGraphBuilder.findCodec(tracks[videoTrack].getFormat(), null, null, null);
+		decoder = SimpleGraphBuilder.findCodec(tracks[videoTrack].getFormat(), null, null, null);
 		Vector dNames = PlugInManager.getPlugInList(tracks[videoTrack].getFormat(), null,PlugInManager.CODEC);
 		for (int i = 0; i<dNames.size();++i){
 			System.out.println("Matching plugins "+i+": "+dNames.get(i));
@@ -160,11 +182,8 @@ public class FrameByFrame implements ControllerListener
 		System.out.println("Decoder name "+decoder.getName());
 
 		/*init decoder*/
-		
 		Buffer buffer = new Buffer();
 		Buffer oBuf = new Buffer();
-		Buffer yuvBuf = new Buffer();
-		Buffer h264Buf = new Buffer();
 		
 		decoder.setInputFormat(tracks[videoTrack].getFormat());
 		Format dof = decoder.setOutputFormat(new RGBFormat(videoSize,-1,(new int[0]).getClass(),25.0f,32, 0xff0000, 0x00ff00, 0x0000ff));
@@ -183,7 +202,7 @@ public class FrameByFrame implements ControllerListener
 		int check = decoder.process(buffer,oBuf);
 		System.out.println("Decoded");
 		Format[] oFormats = null;
-		int framesProcessed = 0;
+		framesProcessed = 0;
 		//for (int framesExtracted = 0; framesExtracted<10; ++framesExtracted){
 		writer = null;
 		System.out.println("Set buffer formats");
@@ -206,17 +225,21 @@ public class FrameByFrame implements ControllerListener
 		System.out.println("Set codec formats");
 		
 		System.out.println("Codecs opened");
+		frameData = (int[]) oBuf.getData();
+
+		printImage(frameData,framesProcessed,videoSize);
+		
 		do{
 			++framesProcessed;
 		  	check = decoder.process(buffer,oBuf);
 		  	//System.out.print("Decoded "+framesProcessed+" len "+oBuf.getLength()+" Ok? "+check);
-			//System.out.print("Decoded "+framesProcessed+" pos "+aviParser.getMediaTime().getSeconds()+" of "+aviParser.getDuration().getSeconds());
-			mainProgram.status.setText("Processed frame No. "+framesProcessed+" Seq#: "+buffer.getSequenceNumber());//+" pos "+aviParser.getMediaTime().getSeconds());			
-			//mainProgram.status.setText("Processed frame No. "+framesProcessed+" pos "+aviParser.getMediaTime().getSeconds());			
+			//System.out.print("Decoded "+framesProcessed+" pos "+deMultiplexer.getMediaTime().getSeconds()+" of "+deMultiplexer.getDuration().getSeconds());
+			mainProgram.status.setText("Processed frame No. "+framesProcessed+" Seq#: "+buffer.getSequenceNumber());//+" pos "+deMultiplexer.getMediaTime().getSeconds());			
+			//mainProgram.status.setText("Processed frame No. "+framesProcessed+" pos "+deMultiplexer.getMediaTime().getSeconds());			
 			//Process raw RGB data here
-			int[] FrameByFrame = (int[]) oBuf.getData();
+			frameData = (int[]) oBuf.getData();
 
-		   printImage(FrameByFrame,framesProcessed,videoSize);
+			printImage(frameData,framesProcessed,videoSize);
 			try{
 				tracks[videoTrack].readFrame(buffer);
 				while((buffer.isDiscard() || buffer.getLength()==0) && !buffer.isEOM()){
@@ -225,15 +248,6 @@ public class FrameByFrame implements ControllerListener
 		   }catch(Exception err){System.out.println("ReadFrame failed"); System.exit(0);}
 		}while(!buffer.isEOM());
 		
-		decoder.close();
-		try{
-			//writer.finalize_mjpeg();
-		}catch (Exception err){
-			System.out.println("Couldn't finalize");
-			System.exit(0);
-		}
-		writer = null;
-		//System.exit(0);
 	}
 	
 	private void printImage(int[] data, int sNumber, Dimension size){
@@ -245,29 +259,15 @@ public class FrameByFrame implements ControllerListener
 			}
 		}
 		mainProgram.drawImage.drawImage(buffImg, mainProgram.width, mainProgram.height);
-		try{
-			//writer.write_frame(buffImg);
-		}catch (Exception err){
-			System.out.println("Couldn't write frame");
-			System.exit(0);
+		if (writer != null){
+			try{
+				writer.write_frame(buffImg);
+			}catch (Exception err){
+				System.out.println("Couldn't write frame");
+				System.exit(0);
+			}
 		}
-		
-		/*
-		Graphics2D g = buffImg.createGraphics();
-		//g.drawImage(img, null, null);
-		// Overlay curent time on image
-		g.setColor(Color.RED);
-		g.setFont(new Font("Verdana", Font.BOLD, 16));
-		g.drawString("Frame #"+((int) sNumber), 10, 25);
-
-		// Save image to disk as PNG
-		try{
-			//ImageIO.write(buffImg, "png", new File("C:/Oma/programming/javaProgramming/javaVideo/grabbed/FragmeGrab"+((int) output.getSequenceNumber())+".png"));
-			ImageIO.write(buffImg, "png", new File(targetVideo+"_FragmeGrab"+((int) sNumber+1000000)+".png"));
-		}catch (Exception err){System.out.println("Couldn't save image");System.exit(0);}
-		*/
 	}
-	
 	
 	public void controllerUpdate(ControllerEvent event){
 		//Configure event
