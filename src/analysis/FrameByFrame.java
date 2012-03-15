@@ -220,7 +220,7 @@ public class FrameByFrame implements ControllerListener
 		readFrame(0);
 	}
 	
-	public void readFrame(int frameNo){
+	public int[] readFrame(int frameNo){
 		Time currentTime = null;
 		Time targetTime = tracks[videoTrack].mapFrameToTime(frameNo);
 		try{
@@ -242,9 +242,14 @@ public class FrameByFrame implements ControllerListener
 			frameData = (int[]) oBuf.getData();
 			printImage(frameData,videoSize);
 			mainProgram.status.setText("Frame Seq#: "+tracks[videoTrack].mapTimeToFrame(currentTime));
+			int[] returnVal = new int[1];
+			returnVal[0] = tracks[videoTrack].mapTimeToFrame(currentTime);
+			return returnVal;
 		}else{
 			mainProgram.status.setText("End of file reached");
+			return null;
 		}
+		
 	}
 	
 	private void printImage(int[] data, Dimension size){

@@ -49,6 +49,7 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 	public JButton fileToOpen;
 	public JButton fileToSave;
 	public JButton openFile;
+	public JButton closeFile;
 	public JTextField lowPass;
 	public JLabel status;
 	public JPanel sliderPane;
@@ -59,11 +60,12 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 	public String initPath;
 	public Vector<String[]> calibrations;
 	public AnalysisThread analysisThread;
-	public int videoFileNo;
+	public int[] currentVideoFrame = null;
 	public DrawImage drawImage;
 	public int width;
 	public int height;
 	public int[] lastCoordinates = null;
+	private Thread anaThread;
 	public JavaVideoAnalysis(){
 		videoFile = null;
 		savePath = null;
@@ -84,7 +86,7 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 		}
 		/*Add buttons and textfield...*/
 		JPanel buttons = new JPanel();
-		buttons.setLayout(new GridLayout(4,2,5,5));	/*Set button layout...*/
+		buttons.setLayout(new GridLayout(5,2,5,5));	/*Set button layout...*/
 		videoToOpen= new JButton("Video file to Open");
 		videoToOpen.setMnemonic(KeyEvent.VK_C);
 		videoToOpen.setActionCommand("videoFile");
@@ -109,6 +111,14 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 		openFile.setToolTipText("Press to Open file.");
 		buttons.add(new JLabel(new String("Click to Open File")));
 		buttons.add(openFile);
+
+		closeFile = new JButton("CloseVideo");
+		closeFile.setMnemonic(KeyEvent.VK_S);
+		closeFile.setActionCommand("closeFile");
+		closeFile.addActionListener(this);
+		closeFile.setToolTipText("Press to Close file.");
+		buttons.add(new JLabel(new String("Click to Close File")));
+		buttons.add(closeFile);
 		
 		status = new JLabel(new String("Ready to Rumble"));
 		buttons.add(status);
@@ -156,7 +166,7 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 				if (!source.getValueIsAdjusting()) {
 					int targetFrame = (int)source.getValue();
 					System.out.println("Target Frame "+targetFrame);
-					analysisThread.frameByFrame.readFrame(targetFrame);
+					currentVideoFrame = analysisThread.frameByFrame.readFrame(targetFrame);
 				}
 				
 			}
@@ -227,14 +237,32 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 			System.out.println("Open file "+videoFile.getName());
 			System.out.println("Save path "+savePath);
 			try{
+				currentVideoFrame = new int[1];
+				currentVideoFrame[0] = 0;
 				analysisThread = new AnalysisThread(this);
-				Thread anaThread = new Thread(analysisThread,"analysisThread");
+				anaThread = new Thread(analysisThread,"analysisThread");
 				anaThread.start();	//All of the analysis needs to be done within this thread from hereafter
 				//anaThread.join();
 			}catch (Exception err){System.out.println("Failed analysis thread"+err);}
 		
 			//System.gc();	//Try to enforce carbage collection
-		}		
+		}
+		//closeFile
+		if ("closeFile".equals(e.getActionCommand())) {
+			videoToOpen.setEnabled(true);
+			openFile.setEnabled(true);
+			fileToSave.setEnabled(true);
+			try{
+				analysisThread.frameByFrame.close();
+				analysisThread = null;
+				anaThread.join();
+				anaThread = null;
+				currentVideoFrame = null;
+				System.gc();	//Try to enforce carbage collection
+			}catch (Exception err){System.out.println("Failed analysis thread"+err);}
+		
+
+		}
 	}
 		
 	public static void main(String[] args){
