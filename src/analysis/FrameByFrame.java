@@ -241,7 +241,7 @@ public class FrameByFrame implements ControllerListener
 			decoder.process(buffer,oBuf);
 			frameData = (int[]) oBuf.getData();
 			printImage(frameData,videoSize);
-			mainProgram.status.setText("Frame Seq#: "+tracks[videoTrack].mapTimeToFrame(currentTime.getSeconds()));
+			mainProgram.status.setText("Frame Seq#: "+tracks[videoTrack].mapTimeToFrame(currentTime));
 		}else{
 			mainProgram.status.setText("End of file reached");
 		}
