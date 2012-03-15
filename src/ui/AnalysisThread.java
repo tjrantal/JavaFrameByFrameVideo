@@ -71,10 +71,5 @@ class AnalysisThread implements Runnable{
 			}catch (Exception err){System.out.println("malformed URL "+err.toString());}
 			
 		}
-		
-		//mainProgram.status.setText(new String("ReadyToRumble"));
-		mainProgram.videoToOpen.setEnabled(true);
-		mainProgram.openFile.setEnabled(true);
-		mainProgram.fileToSave.setEnabled(true);
 	}
 }

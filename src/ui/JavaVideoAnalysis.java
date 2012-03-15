@@ -47,21 +47,26 @@ import java.net.URL;
 public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeListener, MouseListener {	
 	public JButton videoToOpen;
 	public JButton fileToOpen;
-	public JButton fileToSave;
+	public JButton calibrationFile;
 	public JButton openFile;
 	public JButton closeFile;
 	public JTextField lowPass;
 	public JLabel status;
 	public JPanel sliderPane;
+	public JTextArea textArea;
 	public JSlider slider;
 	public File selectedFile;
 	public File videoFile;
 	public String savePath;
 	public String initPath;
+	
 	public Vector<String[]> calibrations;
+	public int pointsDigitized;
+	private int[][] digitizedCalibration;
 	public AnalysisThread analysisThread;
 	public int[] currentVideoFrame = null;
 	public DrawImage drawImage;
+	private CSVReader calibrationData;
 	public int width;
 	public int height;
 	public int[] lastCoordinates = null;
@@ -69,6 +74,8 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 	public JavaVideoAnalysis(){
 		videoFile = null;
 		savePath = null;
+		pointsDigitized = 0;
+		digitizedCalibration = null;
 		/*Preset path*/
 		String videoSourceString =new String("");
 		String videoSavePath = new String("");
@@ -94,16 +101,7 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 		videoToOpen.setToolTipText("Press to select file.");
 		buttons.add(new JLabel(new String("Video file to use")));
 		buttons.add(videoToOpen);
-		
-		fileToSave= new JButton("Result save Path");
-		fileToSave.setMnemonic(KeyEvent.VK_R);
-		fileToSave.setActionCommand("fileToSave");
-		fileToSave.addActionListener(this);
-		fileToSave.setToolTipText("Press to select savePath.");
-		buttons.add(new JLabel(new String("Select Save Path")));
-		buttons.add(fileToSave);
 
-		
 		openFile = new JButton("JavaVideoAnalysis");
 		openFile.setMnemonic(KeyEvent.VK_I);
 		openFile.setActionCommand("openFile");
@@ -111,6 +109,14 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 		openFile.setToolTipText("Press to Open file.");
 		buttons.add(new JLabel(new String("Click to Open File")));
 		buttons.add(openFile);
+		
+		calibrationFile= new JButton("CalibrationFile");
+		calibrationFile.setMnemonic(KeyEvent.VK_R);
+		calibrationFile.setActionCommand("calibrate");
+		calibrationFile.addActionListener(this);
+		calibrationFile.setToolTipText("Press to select calibration object file.");
+		buttons.add(new JLabel(new String("Select calibration object")));
+		buttons.add(calibrationFile);
 
 		closeFile = new JButton("CloseVideo");
 		closeFile.setMnemonic(KeyEvent.VK_S);
@@ -135,6 +141,10 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 		drawImage.addMouseListener(this);
 		add(drawImage);
 		
+		/*Add JTextArea*/
+		textArea = new JTextArea();
+		textArea.setPreferredSize(new Dimension(400,100));
+		add(textArea);
 		/*Add Slider*/
 		slider = new JSlider(JSlider.HORIZONTAL,0, 0, 0);
 		slider.addChangeListener(this);
@@ -191,8 +201,28 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 					}
 					lastCoordinates[0] = me.getX();
 					lastCoordinates[1] = me.getY();
-					/*Draw x and y -coordinate?*/
-					System.out.println("screen(X,Y) = " + lastCoordinates[0] + "," + lastCoordinates[1]);
+					
+					
+					if (digitizedCalibration != null){ //Next clicks after initializing calibration will be calibration
+						System.out.println("adding calibrated point");
+						for (int i = 0;i<2;++i){
+							digitizedCalibration[pointsDigitized][i] = lastCoordinates[i];
+							calibrationData.data.get(pointsDigitized+1).add(Integer.toString(lastCoordinates[i]));
+						}
+						++pointsDigitized;
+						System.out.println("Rewrite calibration");
+						writeCalibrationFile(calibrationData);
+						System.out.println(pointsDigitized+" calibrationPointsDigitized");
+						if (pointsDigitized <calibrationData.data.size()-1){
+							status.setText(new String("Digitize "+calibrationData.data.get(pointsDigitized+1).get(0)));
+						}else{
+							
+							digitizedCalibration = null;
+						}
+						/*Draw x and y -coordinate?*/
+					}else{
+						System.out.println("screen(X,Y) = " + lastCoordinates[0] + "," + lastCoordinates[1]);
+					}
 				}
 			}
 		}
@@ -213,21 +243,35 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 			
 		}	
 		
-		if ("fileToSave".equals(e.getActionCommand())){
+		if ("calibrate".equals(e.getActionCommand())){
 			JFileChooser chooser = new JFileChooser(initPath);
-			chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+			chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 			int returnVal = chooser.showOpenDialog(this);
 			if(returnVal == JFileChooser.APPROVE_OPTION) {
-				File savePathFile = chooser.getSelectedFile();
-				savePath = savePathFile.getAbsolutePath();
-				System.out.println("Save Path "+savePath);
-				status.setText(new String("SavePathChosen"));
+				File calibFile = chooser.getSelectedFile();
+				System.out.println("CSV read");
+				calibrationData = new CSVReader(calibFile,",");
+				status.setText(new String("Calibration chosen"));
+				/*Add calibration to a JTextArea*/
+				/*Fill the textArea with calibration data*/
+				System.out.println("Adding DX DY");
+				calibrationData.data.get(0).add("DX");
+				calibrationData.data.get(0).add("DY");
+				System.out.println("Writing data");
+				writeCalibrationFile(calibrationData);
+				pointsDigitized = 0;
+				digitizedCalibration = new int[calibrationData.data.size()-1][2];	//First row is headers...
+				System.out.println("Set status");
+				status.setText(new String("Digitize "+calibrationData.data.get(pointsDigitized+1).get(0)));
 			}
 		}
+		
+
+		
+		
 		if ("openFile".equals(e.getActionCommand())) {
 			videoToOpen.setEnabled(false);
 			openFile.setEnabled(false);
-			fileToSave.setEnabled(false);
 			if (videoFile == null){
 				videoFile =new File("H:/UserData/winMigrationBU/Deakin/JGREYADJUST/CMJ.avi");
 			}
@@ -251,7 +295,6 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 		if ("closeFile".equals(e.getActionCommand())) {
 			videoToOpen.setEnabled(true);
 			openFile.setEnabled(true);
-			fileToSave.setEnabled(true);
 			try{
 				analysisThread.frameByFrame.close();
 				analysisThread = null;
@@ -264,7 +307,21 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 
 		}
 	}
+	
+	private void writeCalibrationFile(CSVReader calibrationData){
+		textArea.setText("");	//Empty the text prior to adding the latest results...
+		for (int r = 0;r<calibrationData.data.size();++r){
+			String tempText = "";
+			for (int c = 0;c<calibrationData.data.get(r).size();++c){
+				tempText+=calibrationData.data.get(r).get(c);
+				if (c <calibrationData.data.size()-1){tempText+="\t";}
+			}
+			tempText+="\n";
+			textArea.append(tempText);
+		}
+	}
 		
+	
 	public static void main(String[] args){
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
 			public void run(){
