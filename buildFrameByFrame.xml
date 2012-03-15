@@ -11,7 +11,7 @@
   <!--
   <property name="JMF_HOME" location="${env.JMF_HOME}" />
 	-->
-  <property name="javasrc" location="src/analysis" />
+  <property name="javasrc" location="src/" />
   <property name="analysisClasses" location="build/java" />
   <property name="jmfsrc" location="jmfsrc" />
   <property name="jmflib" location="lib" />
@@ -27,10 +27,17 @@
   <!-- Initialize -->
   
   <target name="javacompile" description="Compile Java source" >
-    <javac source="1.4" srcdir="${javasrc}" destdir="${analysisClasses}" nowarn="on">
+    <javac source="1.5" srcdir="${javasrc}" destdir="${analysisClasses}" nowarn="on">
 		<classpath> 
 			<pathelement path="${classes}"/> <!--Include jmf classpath & jars here...-->
 		</classpath>
     </javac>
   </target>
+	
+	
+	<!--
+	<target name="jar" depends="javacompile" description="Create Jar file" >
+		<jar jarfile="javaVideoAnalysis.jar" basedir="${classes}" manifest="manifest/manifest.mf"/>
+	</target>
+	-->
 </project>

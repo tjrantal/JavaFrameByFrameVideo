@@ -1,1 +1,2 @@
-java -cp "build/java;libMinimal" ui.JavaVideoAnalysis
+::java -jar javaVideoAnalysis.jar
+java -cp "build/java" ui.JavaVideoAnalysis

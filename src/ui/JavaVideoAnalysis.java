@@ -51,6 +51,7 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener {
 	public JButton openFile;
 	public JTextField lowPass;
 	public JLabel status;
+	public JPanel sliderPane;
 	public JSlider slider;
 	public File selectedFile;
 	public File videoFile;
@@ -111,31 +112,32 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener {
 		buttons.add(status);
 		add(buttons);
 		
+		
 		/*ADD DrawImage*/
-		width = 640;
-		height = 480;
+		width = 100;
+		height = 100;
 		 drawImage = new DrawImage();
 		drawImage.setBackground(new Color(0, 0, 0));
 		drawImage.setPreferredSize(new Dimension(width,height));
 		drawImage.setOpaque(true);
 		add(drawImage);
-		
+			
 	}
 	
 	public static void initAndShowGU(){
-		JFrame f = new JFrame("JavaVideoAnalysis");
-		f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		JFrame frame = new JFrame("JavaVideoAnalysis");
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		JComponent newContentPane = new JavaVideoAnalysis();
 		newContentPane.setOpaque(true); //content panes must be opaque
-		f.setContentPane(newContentPane);
-		f.pack();
+		frame.setContentPane(newContentPane);
+		frame.pack();
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 		int w = 300;
 		int h = 200;
-		f.setLocation(20, 20);
+		frame.setLocation(20, 20);
 		//f.setLocation(screenSize.width/2 - w/2, screenSize.height/2 - h/2);
 		//f.setSize(w, h);
-		f.setVisible(true);		
+		frame.setVisible(true);		
 	}
 	
 	public void actionPerformed(ActionEvent e) {

@@ -35,6 +35,8 @@ import javax.media.control.*;
 import javax.media.protocol.*;
 import javax.media.format.*;
 import javax.media.util.*;
+import javax.swing.SwingUtilities;		//SwingUtilities.root()
+import javax.swing.JFrame;
 import javax.swing.JSlider;		//Slider
 import java.net.URL;
 import net.sourceforge.jffmpeg.*;	//jffmpeg decoders
@@ -132,22 +134,21 @@ public class FrameByFrame implements ControllerListener
 				tracks[i].setEnabled(false);
 			}
 		}
-		System.out.println("Encoding "+tracks[videoTrack].getFormat().getEncoding());
-		System.out.println("AviParser "+aviParser.toString());
-		Dimension videoSize = null;
-		try{
-			dSource.connect();
-			dSource.start();
-			aviParser.start();	//Test whether starting sets time stuff...
-		}catch(Exception err){System.out.println("Aviparser start failed"); System.exit(0);}
 		
+		System.out.println("Encoding "+tracks[videoTrack].getFormat().getEncoding());
+		System.out.println("DeMultiplexer "+aviParser.toString());
+		
+		Dimension videoSize = null;
 		VideoFormat vf = (VideoFormat) tracks[videoTrack].getFormat();
 		videoSize =vf.getSize();
 		/*Check clip length*/
-		
 		float frameRate = vf.getFrameRate();
+		Time duration = aviParser.getDuration();
+		int frameCount = (int) (duration.getSeconds()*frameRate);
+		System.out.println("Duration "+(duration.getSeconds())+" s Frames: "+frameCount+" frameRate "+frameRate);
+		System.out.println("TrackFrames "+tracks[videoTrack].mapTimeToFrame(tracks[videoTrack].getDuration()));
 
-		mainProgram.drawImage.setPreferredSize(videoSize);
+		
 		System.out.println("Format "+tracks[videoTrack].getFormat().toString());
 		/*Create codecs for decoding, colorspace conversion and encoding*/
 		Codec decoder = SimpleGraphBuilder.findCodec(tracks[videoTrack].getFormat(), null, null, null);
@@ -166,8 +167,7 @@ public class FrameByFrame implements ControllerListener
 		Buffer h264Buf = new Buffer();
 		
 		decoder.setInputFormat(tracks[videoTrack].getFormat());
-		Dimension size = ((VideoFormat)(tracks[videoTrack].getFormat())).getSize();
-		Format dof = decoder.setOutputFormat(new RGBFormat(size,-1,(new int[0]).getClass(),25.0f,32, 0xff0000, 0x00ff00, 0x0000ff));
+		Format dof = decoder.setOutputFormat(new RGBFormat(videoSize,-1,(new int[0]).getClass(),25.0f,32, 0xff0000, 0x00ff00, 0x0000ff));
 		try{
 			decoder.open();		
 		}catch (Exception err){System.out.println("Couldn't open codecs "+err.toString());}
@@ -178,12 +178,7 @@ public class FrameByFrame implements ControllerListener
 				tracks[videoTrack].readFrame(buffer);
 			}
 		}catch(Exception err){System.out.println("ReadFrame failed"); System.exit(0);}
-		/*check timing info here, perhaps it gets updated with the first read...*/
-		Time duration = tracks[videoTrack].getDuration();
-		int frameCount = (int) (duration.getSeconds()/1000000000.0/frameRate);
-		System.out.println("Clip start "+tracks[videoTrack].getStartTime().getSeconds()+" duration "+(duration.getSeconds()/1000000000.0)+" s Frames: "+frameCount+" frameRate "+frameRate);
-		System.out.println("TrackFrames "+tracks[videoTrack].mapTimeToFrame(tracks[videoTrack].getDuration()));
-		
+	
 		oBuf.setFormat(dof);
 		int check = decoder.process(buffer,oBuf);
 		System.out.println("Decoded");
@@ -194,8 +189,12 @@ public class FrameByFrame implements ControllerListener
 		System.out.println("Set buffer formats");
 		
 		/*Implement slider*/
-		mainProgram.slider = new JSlider(JSlider.HORIZONTAL,0, frameCount, 0);
+		mainProgram.slider = new JSlider(JSlider.HORIZONTAL,0, frameCount-1, 0);
 		mainProgram.add(mainProgram.slider);
+		mainProgram.drawImage.setPreferredSize(videoSize);
+		mainProgram.setPreferredSize(new Dimension(videoSize.width, videoSize.height+300));
+		((JFrame) SwingUtilities.getRoot(mainProgram)).pack();	/*Resize the window*/
+		((JFrame) SwingUtilities.getRoot(mainProgram)).setSize(videoSize.width, videoSize.height+300);
 		/*Test saving mPNG*/
 		try{
 			//writer = new MpngWriter(amTVstring,videoSize); 
