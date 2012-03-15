@@ -48,6 +48,7 @@ import ui.*;
 import javax.media.Time;	//For rewinding the video..
 public class FrameByFrame implements ControllerListener
 {
+	/*Private vars*/
 	private boolean goOn =false;
 	private MpngWriter writer;
 	private URL sourceVideo;
@@ -57,9 +58,11 @@ public class FrameByFrame implements ControllerListener
 	private Track[] tracks;
 	private int videoTrack;
 	private Codec decoder;
+	private Buffer buffer;
+	private Buffer oBuf;
+	private Dimension videoSize;
 	
 	/*Public vars*/
-	public int framesProcessed;
 	public float frameRate;
 	public Time duration;
 	public int frameCount;
@@ -160,7 +163,7 @@ public class FrameByFrame implements ControllerListener
 		System.out.println("Encoding "+tracks[videoTrack].getFormat().getEncoding());
 		System.out.println("DeMultiplexer "+deMultiplexer.toString());
 		
-		Dimension videoSize = null;
+		videoSize = null;
 		VideoFormat vf = (VideoFormat) tracks[videoTrack].getFormat();
 		videoSize =vf.getSize();
 		/*Check clip length*/
@@ -182,30 +185,20 @@ public class FrameByFrame implements ControllerListener
 		System.out.println("Decoder name "+decoder.getName());
 
 		/*init decoder*/
-		Buffer buffer = new Buffer();
-		Buffer oBuf = new Buffer();
+		buffer = new Buffer();
+		oBuf = new Buffer();
 		
 		decoder.setInputFormat(tracks[videoTrack].getFormat());
 		Format dof = decoder.setOutputFormat(new RGBFormat(videoSize,-1,(new int[0]).getClass(),25.0f,32, 0xff0000, 0x00ff00, 0x0000ff));
+		oBuf.setFormat(dof);
 		try{
 			decoder.open();		
 		}catch (Exception err){System.out.println("Couldn't open codecs "+err.toString());}
 		//Read first frame to intialize other codecs
-		try{
-			tracks[videoTrack].readFrame(buffer);
-			while((buffer.isDiscard() || buffer.getLength()==0) && !buffer.isEOM()){
-				tracks[videoTrack].readFrame(buffer);
-			}
-		}catch(Exception err){System.out.println("ReadFrame failed"); System.exit(0);}
-	
-		oBuf.setFormat(dof);
-		int check = decoder.process(buffer,oBuf);
-		System.out.println("Decoded");
-		Format[] oFormats = null;
-		framesProcessed = 0;
+
+
 		//for (int framesExtracted = 0; framesExtracted<10; ++framesExtracted){
 		writer = null;
-		System.out.println("Set buffer formats");
 		
 		/*Implement slider*/
 		mainProgram.slider = new JSlider(JSlider.HORIZONTAL,0, frameCount-1, 0);
@@ -214,43 +207,39 @@ public class FrameByFrame implements ControllerListener
 		mainProgram.setPreferredSize(new Dimension(videoSize.width, videoSize.height+300));
 		((JFrame) SwingUtilities.getRoot(mainProgram)).pack();	/*Resize the window*/
 		((JFrame) SwingUtilities.getRoot(mainProgram)).setSize(videoSize.width, videoSize.height+300);
-		/*Test saving mPNG*/
+
+		/*Saving mPNG*/
 		try{
 			//writer = new MpngWriter(amTVstring,videoSize); 
 			//writer.writeHeader();
 		}catch(Exception err){System.out.println("Couldn't open writer"); System.exit(0);}
-		
-		/*Test resizing to 176x144 and then using the h264 encoder...*/
-		
-		System.out.println("Set codec formats");
-		
-		System.out.println("Codecs opened");
-		frameData = (int[]) oBuf.getData();
-
-		printImage(frameData,framesProcessed,videoSize);
-		
-		do{
-			++framesProcessed;
-		  	check = decoder.process(buffer,oBuf);
-		  	//System.out.print("Decoded "+framesProcessed+" len "+oBuf.getLength()+" Ok? "+check);
-			//System.out.print("Decoded "+framesProcessed+" pos "+deMultiplexer.getMediaTime().getSeconds()+" of "+deMultiplexer.getDuration().getSeconds());
-			mainProgram.status.setText("Processed frame No. "+framesProcessed+" Seq#: "+buffer.getSequenceNumber());//+" pos "+deMultiplexer.getMediaTime().getSeconds());			
-			//mainProgram.status.setText("Processed frame No. "+framesProcessed+" pos "+deMultiplexer.getMediaTime().getSeconds());			
-			//Process raw RGB data here
-			frameData = (int[]) oBuf.getData();
-
-			printImage(frameData,framesProcessed,videoSize);
-			try{
-				tracks[videoTrack].readFrame(buffer);
-				while((buffer.isDiscard() || buffer.getLength()==0) && !buffer.isEOM()){
-					tracks[videoTrack].readFrame(buffer);
-				}
-		   }catch(Exception err){System.out.println("ReadFrame failed"); System.exit(0);}
-		}while(!buffer.isEOM());
-		
+		System.out.println("Got to reading Frame");
+		readFrame(0);
 	}
 	
-	private void printImage(int[] data, int sNumber, Dimension size){
+	public void readFrame(int frameNo){
+		try{
+			deMultiplexer.setPosition(new Time((double) frameNo/frameRate),javax.media.protocol.Positionable.RoundDown);
+		}catch(Exception err){System.out.println("Search failed"); System.exit(0);}
+		System.out.println("Searched successfully");
+		try{
+			tracks[videoTrack].readFrame(buffer);
+			while((buffer.isDiscard() || buffer.getLength()==0) && !buffer.isEOM() && buffer.getSequenceNumber()<frameNo){
+				tracks[videoTrack].readFrame(buffer);
+			}
+	   }catch(Exception err){System.out.println("ReadFrame failed"); System.exit(0);}
+	   System.out.println("Read Frame successfully");
+	   if (!buffer.isEOM()){
+			decoder.process(buffer,oBuf);
+			frameData = (int[]) oBuf.getData();
+			printImage(frameData,videoSize);
+			mainProgram.status.setText("Frame Seq#: "+buffer.getSequenceNumber());
+		}else{
+			mainProgram.status.setText("End of file reached");
+		}
+	}
+	
+	private void printImage(int[] data, Dimension size){
 		//BufferedImage buffImg = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
 		BufferedImage buffImg = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_BGR);
 		for (int j = 0; j<size.height;++j){

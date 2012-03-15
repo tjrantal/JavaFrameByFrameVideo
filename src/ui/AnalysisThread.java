@@ -71,7 +71,7 @@ class AnalysisThread implements Runnable{
 			
 		}
 		
-		mainProgram.status.setText(new String("ReadyToRumble"));
+		//mainProgram.status.setText(new String("ReadyToRumble"));
 		mainProgram.videoToOpen.setEnabled(true);
 		mainProgram.openFile.setEnabled(true);
 		mainProgram.fileToSave.setEnabled(true);
