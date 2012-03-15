@@ -38,6 +38,7 @@ import javax.media.util.*;
 import javax.swing.SwingUtilities;		//SwingUtilities.root()
 import javax.swing.JFrame;
 import javax.swing.JSlider;		//Slider
+import javax.swing.DefaultBoundedRangeModel;
 import java.net.URL;
 import net.sourceforge.jffmpeg.*;	//jffmpeg decoders
 import com.sun.media.parser.video.*;
@@ -201,8 +202,7 @@ public class FrameByFrame implements ControllerListener
 		writer = null;
 		
 		/*Implement slider*/
-		mainProgram.slider = new JSlider(JSlider.HORIZONTAL,0, frameCount-1, 0);
-		mainProgram.add(mainProgram.slider);
+		mainProgram.slider.setModel(new DefaultBoundedRangeModel(0,0,0,frameCount-1));
 		mainProgram.drawImage.setPreferredSize(videoSize);
 		mainProgram.setPreferredSize(new Dimension(videoSize.width, videoSize.height+300));
 		((JFrame) SwingUtilities.getRoot(mainProgram)).pack();	/*Resize the window*/
@@ -218,17 +218,18 @@ public class FrameByFrame implements ControllerListener
 	}
 	
 	public void readFrame(int frameNo){
+		Time newTime = null;
 		try{
-			deMultiplexer.setPosition(new Time((double) frameNo/frameRate),javax.media.protocol.Positionable.RoundDown);
+			newTime = deMultiplexer.setPosition(new Time((double) frameNo/frameRate),javax.media.protocol.Positionable.RoundDown);
 		}catch(Exception err){System.out.println("Search failed"); System.exit(0);}
-		System.out.println("Searched successfully");
+		System.out.println("Searched successfully "+newTime.getSeconds());
 		try{
 			tracks[videoTrack].readFrame(buffer);
 			while((buffer.isDiscard() || buffer.getLength()==0) && !buffer.isEOM() && buffer.getSequenceNumber()<frameNo){
 				tracks[videoTrack].readFrame(buffer);
 			}
 	   }catch(Exception err){System.out.println("ReadFrame failed"); System.exit(0);}
-	   System.out.println("Read Frame successfully");
+	   System.out.println("Read Frame successfully "+buffer.getSequenceNumber());
 	   if (!buffer.isEOM()){
 			decoder.process(buffer,oBuf);
 			frameData = (int[]) oBuf.getData();

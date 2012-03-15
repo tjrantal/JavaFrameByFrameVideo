@@ -44,7 +44,7 @@ import java.net.URL;
 
 /*implements AL antaa mahdollisuuden kayttaa eventtteja koneelta. Kayttis toteuttaa...*/
 /*extends = inherit, voi peria vain yhden*/
-public class JavaVideoAnalysis extends JPanel implements ActionListener {	
+public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeListener, MouseListener {	
 	public JButton videoToOpen;
 	public JButton fileToOpen;
 	public JButton fileToSave;
@@ -58,10 +58,12 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener {
 	public String savePath;
 	public String initPath;
 	public Vector<String[]> calibrations;
+	public AnalysisThread analysisThread;
 	public int videoFileNo;
 	public DrawImage drawImage;
 	public int width;
 	public int height;
+	public int[] lastCoordinates = null;
 	public JavaVideoAnalysis(){
 		videoFile = null;
 		savePath = null;
@@ -120,7 +122,13 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener {
 		drawImage.setBackground(new Color(0, 0, 0));
 		drawImage.setPreferredSize(new Dimension(width,height));
 		drawImage.setOpaque(true);
+		drawImage.addMouseListener(this);
 		add(drawImage);
+		
+		/*Add Slider*/
+		slider = new JSlider(JSlider.HORIZONTAL,0, 0, 0);
+		slider.addChangeListener(this);
+		add(slider);
 			
 	}
 	
@@ -140,6 +148,47 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener {
 		frame.setVisible(true);		
 	}
 	
+	/*ChangeListener*/
+	public void stateChanged(ChangeEvent e) {
+		if (analysisThread != null){
+			if (analysisThread.frameByFrame != null){
+				JSlider source = (JSlider)e.getSource();
+				if (!source.getValueIsAdjusting()) {
+					int targetFrame = (int)source.getValue();
+					System.out.println("Target Frame "+targetFrame);
+					analysisThread.frameByFrame.readFrame(targetFrame);
+				}
+				
+			}
+		}
+	}
+	
+	/*MouseListener*/
+	public void mouseClicked(MouseEvent me) {
+	}
+	public void mousePressed(MouseEvent me) {
+	}
+	public void mouseExited(MouseEvent me) {
+	}
+	public void mouseEntered(MouseEvent me) {
+	}
+	public void mouseReleased(MouseEvent me) {
+		if (analysisThread != null){
+			if (analysisThread.frameByFrame != null){
+				if (me.getButton() == MouseEvent.BUTTON1){
+					if (lastCoordinates == null){		
+						lastCoordinates = new int[2];
+					}
+					lastCoordinates[0] = me.getX();
+					lastCoordinates[1] = me.getY();
+					/*Draw x and y -coordinate?*/
+					System.out.println("screen(X,Y) = " + lastCoordinates[0] + "," + lastCoordinates[1]);
+				}
+			}
+		}
+	}
+
+	/*ActionListener*/
 	public void actionPerformed(ActionEvent e) {
 		if ("videoFile".equals(e.getActionCommand())){
 			JFileChooser chooser = new JFileChooser(initPath);
@@ -178,7 +227,7 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener {
 			System.out.println("Open file "+videoFile.getName());
 			System.out.println("Save path "+savePath);
 			try{
-				AnalysisThread analysisThread = new AnalysisThread(this);
+				analysisThread = new AnalysisThread(this);
 				Thread anaThread = new Thread(analysisThread,"analysisThread");
 				anaThread.start();	//All of the analysis needs to be done within this thread from hereafter
 				//anaThread.join();

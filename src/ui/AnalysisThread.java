@@ -25,6 +25,7 @@ import analysis.*;
 import java.io.*;
 class AnalysisThread implements Runnable{
 	public JavaVideoAnalysis mainProgram;
+	public FrameByFrame frameByFrame = null;
 	AnalysisThread(JavaVideoAnalysis mainProgram){
 		this.mainProgram = mainProgram;
 	}
@@ -66,7 +67,7 @@ class AnalysisThread implements Runnable{
 				//System.out.println("URL "+sFileURL.toString()+" oURL "+oFileURL.toString());
 				mainProgram.status.setText(new String("Analyzing..."));
 				//FrameByFrame frameByFrame = new FrameByFrame(sFileURL,tempOutFile,mainProgram);
-				FrameByFrame frameByFrame = new FrameByFrame(sFileURL,mainProgram.savePath+"/"+mainProgram.videoFile.getName(),mainProgram);
+				frameByFrame = new FrameByFrame(sFileURL,mainProgram.savePath+"/"+mainProgram.videoFile.getName(),mainProgram);
 			}catch (Exception err){System.out.println("malformed URL "+err.toString());}
 			
 		}

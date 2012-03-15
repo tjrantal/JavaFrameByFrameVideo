@@ -29,12 +29,13 @@ import java.text.DecimalFormat;	//For rounding text
 
 public class DrawImage extends JPanel{
 
-	public BufferedImage preparationBuffer;
-	public Image imageToDraw;
-	double width;
-	double height;
-	String f0s;
-	DecimalFormat dfo;
+	private BufferedImage preparationBuffer;
+	private Image imageToDraw;
+	public double width;
+	public double height;
+	private String f0s;
+	private DecimalFormat dfo;
+	
 	public DrawImage(){
 		dfo = new DecimalFormat("0.0");
 		//setBackground(new Color(0, 0, 0));
@@ -149,6 +150,7 @@ public class DrawImage extends JPanel{
 	
 		/*BufferedImage*/
 	public void drawImage(BufferedImage biIn, int width, int height) { 
+		preparationBuffer = biIn;
 		imageToDraw = (Image) biIn;
 		//imageToDraw= imageToDraw.getScaledInstance(width, height, Image.SCALE_SMOOTH);
 		repaint();
