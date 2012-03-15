@@ -217,7 +217,6 @@ public class FrameByFrame implements ControllerListener
 			//writer = new MpngWriter(amTVstring,videoSize); 
 			//writer.writeHeader();
 		}catch(Exception err){System.out.println("Couldn't open writer"); System.exit(0);}
-		System.out.println("Got to reading Frame");
 		readFrame(0);
 	}
 	
@@ -227,17 +226,14 @@ public class FrameByFrame implements ControllerListener
 		try{
 			currentTime = deMultiplexer.setPosition(targetTime,javax.media.protocol.Positionable.RoundDown);
 			}catch(Exception err){System.out.println("Search failed"); System.exit(0);}
-		System.out.println("Searched successfully "+currentTime.getSeconds()+" target "+targetTime.getSeconds());
 		try{
 			tracks[videoTrack].readFrame(buffer);
 			decoder.process(buffer,oBuf);
 			currentTime = new Time(buffer.getTimeStamp());
-			System.out.println("Time stamp "+currentTime.getSeconds()+" from buffer "+buffer.getTimeStamp());
 			while ((buffer.isDiscard() || buffer.getLength()==0 ||currentTime.getSeconds() < targetTime.getSeconds() )&& !buffer.isEOM()) { // && buffer.getSequenceNumber()<frameNo){
 				tracks[videoTrack].readFrame(buffer);
 				decoder.process(buffer,oBuf);
 				currentTime = new Time(buffer.getTimeStamp());
-				System.out.println("within loop "+currentTime.getSeconds()+" from buffer "+buffer.getTimeStamp());
 			}
 	   }catch(Exception err){System.out.println("ReadFrame failed"); System.exit(0);}
 	   System.out.println("Time stamp after loop"+currentTime.getSeconds());
@@ -245,7 +241,7 @@ public class FrameByFrame implements ControllerListener
 			decoder.process(buffer,oBuf);
 			frameData = (int[]) oBuf.getData();
 			printImage(frameData,videoSize);
-			mainProgram.status.setText("Frame Seq#: "+buffer.getSequenceNumber());
+			mainProgram.status.setText("Frame Seq#: "+tracks[videoTrack].mapTimeToFrame(currentTime.getSeconds()));
 		}else{
 			mainProgram.status.setText("End of file reached");
 		}

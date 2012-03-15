@@ -529,11 +529,11 @@ public class AviParser extends BasicPullParser {
 			// For video tracks, if all the frames are not key frames,
 			// build the indexToKeyframeIndex table
 			// which maps a video frame to a key frame.
-			System.out.println("Index keyframes");
+			//System.out.println("Index keyframes");
 			for (int i = 0; i < numTracks; i++) {
 				if (trakList[i].trackType.equals(VIDEO)) {
 					int numKeyFrames = trakList[i].numKeyFrames;
-					System.out.println("Num keyframes "+numKeyFrames);
+					//System.out.println("Num keyframes "+numKeyFrames);
 					if (numKeyFrames > 0)
 					keyFrameTrack = i;
 					int maxChunkIndex = trakList[i].maxChunkIndex;
@@ -610,7 +610,7 @@ public class AviParser extends BasicPullParser {
 				if (trakInfo.trackType.equals(VIDEO)) {
 					if (usecPerFrame != 0) {
 						chunkNumber = (int) (where.getNanoseconds() / nanoSecPerFrame);
-						System.out.println("Setting position kfNum "+keyframeNum+" chunkNo "+chunkNumber);
+						//System.out.println("Setting position kfNum "+keyframeNum+" chunkNo "+chunkNumber);
 						if (chunkNumber < 0)
 						chunkNumber = 0;
 						else if (chunkNumber >= trakInfo.maxChunkIndex) {
@@ -653,7 +653,7 @@ public class AviParser extends BasicPullParser {
 					}
 				}
 			} finally {
-				System.out.println("Setting tracks "+keyframeNum+" chunkNo "+chunkNumber);
+				//System.out.println("Setting tracks "+keyframeNum+" chunkNo "+chunkNumber);
 				((MediaTrack)tracks[i]).setChunkNumberAndOffset(chunkNumber,
 				offsetWithinChunk);
 			}
@@ -662,11 +662,11 @@ public class AviParser extends BasicPullParser {
 	}
 
 	public Time getMediaTime() {
-		System.out.println("Acquiring media Time");
+		//System.out.println("Acquiring media Time");
 		for (int i = 0; i<tracks.length;++i){
 			if (!tracks[i].isEnabled()){	continue;}
 			if (tracks[i] instanceof VideoTrack) {
-				System.out.println("Found VideoTrack "+((VideoTrack) tracks[i]).getTimeStamp());
+				//System.out.println("Found VideoTrack "+((VideoTrack) tracks[i]).getTimeStamp());
 				return (new Time(((VideoTrack) tracks[i]).getTimeStamp()));
 			}
 		}
