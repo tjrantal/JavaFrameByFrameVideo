@@ -40,6 +40,8 @@ import java.text.*;
 import analysis.*;	//FrameByFrame
 import ui.*;			//AnalysisThread
 import DrawImage.*;			//AnalysisThread
+import dlt.*;		//Direct linear transformation
+import Jama.*;		//Jama Matrix
 import java.net.URL;
 
 /*implements AL antaa mahdollisuuden kayttaa eventtteja koneelta. Kayttis toteuttaa...*/
@@ -67,6 +69,7 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 	public int[] currentVideoFrame = null;
 	public DrawImage drawImage;
 	private CSVReader calibrationData;
+	public DLT2D dlt2d = null;
 	public int width;
 	public int height;
 	public int[] lastCoordinates = null;
@@ -93,7 +96,7 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 		}
 		/*Add buttons and textfield...*/
 		JPanel buttons = new JPanel();
-		buttons.setLayout(new GridLayout(5,2,5,5));	/*Set button layout...*/
+		buttons.setLayout(new GridLayout(4,2,5,5));	/*Set button layout...*/
 		videoToOpen= new JButton("Video file to Open");
 		videoToOpen.setMnemonic(KeyEvent.VK_C);
 		videoToOpen.setActionCommand("videoFile");
@@ -101,7 +104,7 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 		videoToOpen.setToolTipText("Press to select file.");
 		buttons.add(new JLabel(new String("Video file to use")));
 		buttons.add(videoToOpen);
-
+/*
 		openFile = new JButton("JavaVideoAnalysis");
 		openFile.setMnemonic(KeyEvent.VK_I);
 		openFile.setActionCommand("openFile");
@@ -109,7 +112,7 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 		openFile.setToolTipText("Press to Open file.");
 		buttons.add(new JLabel(new String("Click to Open File")));
 		buttons.add(openFile);
-		
+	*/	
 		calibrationFile= new JButton("CalibrationFile");
 		calibrationFile.setMnemonic(KeyEvent.VK_R);
 		calibrationFile.setActionCommand("calibrate");
@@ -210,18 +213,53 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 							calibrationData.data.get(pointsDigitized+1).add(Integer.toString(lastCoordinates[i]));
 						}
 						++pointsDigitized;
-						System.out.println("Rewrite calibration");
 						writeCalibrationFile(calibrationData);
-						System.out.println(pointsDigitized+" calibrationPointsDigitized");
 						if (pointsDigitized <calibrationData.data.size()-1){
 							status.setText(new String("Digitize "+calibrationData.data.get(pointsDigitized+1).get(0)));
 						}else{
+							/*Get the DLT coefficients and store calibration in dlt2d*/
+							dlt2d = null;	//Get rid of existing calibration
+							double[][] global = new  double[calibrationData.data.size()-1][2];  //Global coordinates of the calibration object
+							double[][] digitizedPoints = new double[calibrationData.data.size()-1][2];
+							/*Copy the calibration object*/
+							//System.out.println("R size "+ calibrationData.data.size()+" C size "+ calibrationData.data.get(1).size());
+							for (int r = 0; r< calibrationData.data.size()-1;++r){
+								for (int c = 0; c<2;++c){
+									System.out.println(calibrationData.data.get(r+1).get(c+1));
+									global[r][c] = Double.parseDouble(calibrationData.data.get(r+1).get(c+1));
+								}
+							}
+							/*Copy the calibration points*/
+							for (int r = 0; r< digitizedPoints.length;++r){
+								for (int c = 0; c< digitizedPoints[r].length;++c){
+									digitizedPoints[r][c] = (double) digitizedCalibration[r][c];
+								}
+							}
+							
+							dlt2d = new DLT2D(global,digitizedPoints);
+							/*Print coefficients...*/
+							Matrix coeffs = dlt2d.getCurrentDltCoefficients();
+							calibrationData.data.add(new Vector<String>());	//Add new row for DLT-coefficients
+							calibrationData.data.lastElement().add("2D DLT");
+							String resultString = "Coefficients\n";
+							for (int i = 0; i< coeffs.getRowDimension();++i){
+								calibrationData.data.lastElement().add(Double.toString(coeffs.get(i,0)));
+							}
+							writeCalibrationFile(calibrationData);
 							
 							digitizedCalibration = null;
+							status.setText(new String("Obtained 2D DLT coefficients"));
 						}
 						/*Draw x and y -coordinate?*/
 					}else{
-						System.out.println("screen(X,Y) = " + lastCoordinates[0] + "," + lastCoordinates[1]);
+						if (dlt2d == null){
+							System.out.println("screen(X,Y) = " + lastCoordinates[0] + "," + lastCoordinates[1]);
+						} else {
+							double[] digitizedPoints = {(double) lastCoordinates[0], (double) lastCoordinates[1]};
+							Matrix coordinates = dlt2d.scaleCoordinates(digitizedPoints);
+							
+							System.out.println("screen(X,Y) = " + lastCoordinates[0] + "," + lastCoordinates[1] +" calibratred = "+coordinates.get(0,0) +","+coordinates.get(1,0));
+						}
 					}
 				}
 			}
@@ -241,6 +279,25 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 				status.setText(new String("videoFileChosen"));
 			}
 			
+			videoToOpen.setEnabled(false);
+			//openFile.setEnabled(false);
+			if (videoFile == null){
+				videoFile =new File("H:/UserData/winMigrationBU/Deakin/JGREYADJUST/CMJ.avi");
+			}
+			if (savePath == null){
+				savePath = new String("H:/UserData/winMigrationBU/Deakin/JGREYADJUST/figs/");
+			}
+			System.out.println("Open file "+videoFile.getName());
+			System.out.println("Save path "+savePath);
+			try{
+				currentVideoFrame = new int[1];
+				currentVideoFrame[0] = 0;
+				analysisThread = new AnalysisThread(this);
+				anaThread = new Thread(analysisThread,"analysisThread");
+				anaThread.start();	//All of the analysis needs to be done within this thread from hereafter
+				//anaThread.join();
+			}catch (Exception err){System.out.println("Failed analysis thread"+err);}
+			
 		}	
 		
 		if ("calibrate".equals(e.getActionCommand())){
@@ -250,7 +307,17 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 			if(returnVal == JFileChooser.APPROVE_OPTION) {
 				File calibFile = chooser.getSelectedFile();
 				System.out.println("CSV read");
+				calibrationData = null;		//Remove any previous calibration
 				calibrationData = new CSVReader(calibFile,",");
+				
+				/*TODO read calibration object here.
+				If calibrationData.data.size()
+				== 3, 2D calibration object
+				== 4, 3D calibration object
+				== 5, 2D calibration object and digitized points
+				== 6, 3D calibration object and digitized points
+				*/
+				
 				status.setText(new String("Calibration chosen"));
 				/*Add calibration to a JTextArea*/
 				/*Fill the textArea with calibration data*/
@@ -271,7 +338,7 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 		
 		if ("openFile".equals(e.getActionCommand())) {
 			videoToOpen.setEnabled(false);
-			openFile.setEnabled(false);
+			//openFile.setEnabled(false);
 			if (videoFile == null){
 				videoFile =new File("H:/UserData/winMigrationBU/Deakin/JGREYADJUST/CMJ.avi");
 			}
@@ -294,7 +361,7 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 		//closeFile
 		if ("closeFile".equals(e.getActionCommand())) {
 			videoToOpen.setEnabled(true);
-			openFile.setEnabled(true);
+			//openFile.setEnabled(true);
 			try{
 				analysisThread.frameByFrame.close();
 				analysisThread = null;
