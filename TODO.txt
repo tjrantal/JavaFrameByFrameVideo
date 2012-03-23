@@ -1,0 +1,8 @@
+Reading frame by frame, if reading next, do not use search!!
+
+When digitizing, advance one frame with mouse click
+Save digitized points and associated frame, print to a text file.
+Allow saving digitized results as well as DLT calibration.
+
+
+Try creating several frames -> clean up GUI look. Check whether the video fits into the screen. If not, scale down?
