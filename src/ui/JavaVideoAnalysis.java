@@ -73,6 +73,7 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 	public int width;
 	public int height;
 	public int[] lastCoordinates = null;
+	public DigitizedPoints digitizedPoints = null;
 	private Thread anaThread;
 	public JavaVideoAnalysis(){
 		videoFile = null;
@@ -255,9 +256,12 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 						if (dlt2d == null){
 							System.out.println("screen(X,Y) = " + lastCoordinates[0] + "," + lastCoordinates[1]);
 						} else {
-							double[] digitizedPoints = {(double) lastCoordinates[0], (double) lastCoordinates[1]};
-							Matrix coordinates = dlt2d.scaleCoordinates(digitizedPoints);
+							double[] digitizedPoint = {(double) lastCoordinates[0], (double) lastCoordinates[1]};
+							Matrix coordinates = dlt2d.scaleCoordinates(digitizedPoint);
 							System.out.println("screen(X,Y) = " + lastCoordinates[0] + "," + lastCoordinates[1] +" calibratred = "+coordinates.get(0,0) +","+coordinates.get(1,0));
+							//Add the
+							digitizedPoints.addPoint((double) lastCoordinates[0], (double) lastCoordinates[1],digitizedPoint, currentVideoFrame[0]);
+							writeDigitizedPoints(digitizedPoints);							
 							//Go to next frame
 							currentVideoFrame = analysisThread.frameByFrame.readFrame();
 						}
@@ -369,6 +373,8 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 				anaThread.join();
 				anaThread = null;
 				currentVideoFrame = null;
+				digitizedPoints = null;
+				dlt2d = null;
 				System.gc();	//Try to enforce carbage collection
 			}catch (Exception err){System.out.println("Failed analysis thread"+err);}
 		
@@ -383,6 +389,23 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 			for (int c = 0;c<calibrationData.data.get(r).size();++c){
 				tempText+=calibrationData.data.get(r).get(c);
 				if (c <calibrationData.data.size()-1){tempText+="\t";}
+			}
+			tempText+="\n";
+			textArea.append(tempText);
+		}
+	}
+	
+	private void writeDigitizedPoints(DigitizedPoints digitizedPoints){
+		textArea.setText("");	//Empty the text prior to adding the latest results...
+		textArea.append("Frame#\tX\tY\tScaledX\tScaledY\n");
+		for (int r = 0;r<digitizedPoints.points.size();++r){
+			String tempText = "";
+			tempText+=digitizedPoints.points.get(r).frameNo+"\t";
+			tempText+=digitizedPoints.points.get(r).x+"\t";
+			tempText+=digitizedPoints.points.get(r).y+"\t";
+			for (int c = 0;c<digitizedPoints.points.get(r).scaledPoints.length;++c){
+				tempText+=digitizedPoints.points.get(r).scaledPoints[c];
+				if (c <digitizedPoints.points.get(r).scaledPoints.length-1){tempText+="\t";}
 			}
 			tempText+="\n";
 			textArea.append(tempText);

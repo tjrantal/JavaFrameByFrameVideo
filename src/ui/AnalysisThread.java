@@ -68,6 +68,7 @@ class AnalysisThread implements Runnable{
 				mainProgram.status.setText(new String("Analyzing..."));
 				//FrameByFrame frameByFrame = new FrameByFrame(sFileURL,tempOutFile,mainProgram);
 				frameByFrame = new FrameByFrame(sFileURL,mainProgram.savePath+"/"+mainProgram.videoFile.getName(),mainProgram);
+				mainProgram.digitizedPoints = new DigitizedPoints();
 			}catch (Exception err){System.out.println("malformed URL "+err.toString());}
 			
 		}
