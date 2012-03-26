@@ -409,6 +409,10 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 		if ("closeFile".equals(e.getActionCommand())) {
 			WindowEvent wev = new WindowEvent(this.videoFrame, WindowEvent.WINDOW_CLOSING);
 			Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(wev);
+			
+			/*Close the digitized points window as well*/
+			wev = new WindowEvent(this.pointFrame, WindowEvent.WINDOW_CLOSING);
+			Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(wev);
 		}
 	}
 	
