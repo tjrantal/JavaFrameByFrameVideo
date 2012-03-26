@@ -257,8 +257,9 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 						} else {
 							double[] digitizedPoints = {(double) lastCoordinates[0], (double) lastCoordinates[1]};
 							Matrix coordinates = dlt2d.scaleCoordinates(digitizedPoints);
-							
 							System.out.println("screen(X,Y) = " + lastCoordinates[0] + "," + lastCoordinates[1] +" calibratred = "+coordinates.get(0,0) +","+coordinates.get(1,0));
+							//Go to next frame
+							currentVideoFrame = analysisThread.frameByFrame.readFrame();
 						}
 					}
 				}

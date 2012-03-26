@@ -1,1 +1,0 @@
-javac -cp ".;H:\UserData\winMigrationBU\Deakin\JGREYADJUST" MpngWriter.java

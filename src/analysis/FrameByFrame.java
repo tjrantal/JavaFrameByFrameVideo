@@ -223,9 +223,18 @@ public class FrameByFrame implements ControllerListener
 	public int[] readFrame(int frameNo){
 		Time currentTime = null;
 		Time targetTime = tracks[videoTrack].mapFrameToTime(frameNo);
+
+		if (buffer != null){ //check whether seek is needed
+			currentTime = new Time(buffer.getTimeStamp());
+			if ((targetTime.getSeconds() - currentTime.getSeconds()) == 1.0/frameRate){
+				System.out.println("No seek required");
+				return readFrame();
+			}
+		}
+		
 		try{
 			currentTime = deMultiplexer.setPosition(targetTime,javax.media.protocol.Positionable.RoundDown);
-			}catch(Exception err){System.out.println("Search failed"); System.exit(0);}
+		}catch(Exception err){System.out.println("Search failed"); System.exit(0);}
 		try{
 			tracks[videoTrack].readFrame(buffer);
 			decoder.process(buffer,oBuf);
@@ -235,8 +244,37 @@ public class FrameByFrame implements ControllerListener
 				decoder.process(buffer,oBuf);
 				currentTime = new Time(buffer.getTimeStamp());
 			}
-	   }catch(Exception err){System.out.println("ReadFrame failed"); System.exit(0);}
+		}catch(Exception err){System.out.println("ReadFrame failed"); System.exit(0);}
+	   
 	   System.out.println("Time stamp after loop"+currentTime.getSeconds());
+	   if (!buffer.isEOM()){
+			decoder.process(buffer,oBuf);
+			frameData = (int[]) oBuf.getData();
+			printImage(frameData,videoSize);
+			mainProgram.status.setText("Frame Seq#: "+tracks[videoTrack].mapTimeToFrame(currentTime));
+			int[] returnVal = new int[1];
+			returnVal[0] = tracks[videoTrack].mapTimeToFrame(currentTime);
+			return returnVal;
+		}else{
+			mainProgram.status.setText("End of file reached");
+			return null;
+		}
+		
+	}
+	
+	public int[] readFrame(){
+		Time currentTime = null;
+		try{
+			tracks[videoTrack].readFrame(buffer);
+			decoder.process(buffer,oBuf);
+			currentTime = new Time(buffer.getTimeStamp());
+			while ((buffer.isDiscard() || buffer.getLength()==0)&& !buffer.isEOM()) { // && buffer.getSequenceNumber()<frameNo){
+				tracks[videoTrack].readFrame(buffer);
+				decoder.process(buffer,oBuf);
+				currentTime = new Time(buffer.getTimeStamp());				}
+	   }catch(Exception err){System.out.println("ReadFrame failed"); System.exit(0);}
+
+	   System.out.println("Time stamp "+currentTime.getSeconds());
 	   if (!buffer.isEOM()){
 			decoder.process(buffer,oBuf);
 			frameData = (int[]) oBuf.getData();
