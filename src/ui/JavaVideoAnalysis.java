@@ -279,6 +279,19 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 							
 							digitizedCalibration = null;
 							status.setText(new String("Obtained 2D DLT coefficients"));
+							/*Create text pane for coordinates*/
+							pointFrame = new JFrame();
+							pointFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+							pointTextArea = new JTextArea();
+							pointTextArea.setEditable(false);
+							//pointTextArea.setPreferredSize(new Dimension(400,200));
+							JScrollPane scrollPane = new JScrollPane(pointTextArea); 
+							scrollPane.setOpaque(true);
+							pointFrame.setContentPane(scrollPane);
+							pointFrame.pack();
+							pointFrame.setLocation(10, 600);
+							pointFrame.setVisible(true);	
+							
 						}
 						/*Draw x and y -coordinate?*/
 					}else{
@@ -428,8 +441,8 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 	}
 	
 	private void writeDigitizedPoints(DigitizedPoints digitizedPoints){
-		textArea.setText("");	//Empty the text prior to adding the latest results...
-		textArea.append("Frame#\tX\tY\tScaledX\tScaledY\n");
+		pointTextArea.setText("");	//Empty the text prior to adding the latest results...
+		pointTextArea.append("Frame#\tX\tY\tScaledX\tScaledY\n");
 		for (int r = 0;r<digitizedPoints.points.size();++r){
 			String tempText = "";
 			tempText+=digitizedPoints.points.get(r).frameNo+"\t";
@@ -440,7 +453,7 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 				if (c <digitizedPoints.points.get(r).scaledPoints.length-1){tempText+="\t";}
 			}
 			tempText+="\n";
-			textArea.append(tempText);
+			pointTextArea.append(tempText);
 		}
 	}
 		

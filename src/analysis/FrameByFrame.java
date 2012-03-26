@@ -226,9 +226,10 @@ public class FrameByFrame implements ControllerListener
 		contentPane.setOpaque(true); //content panes must be opaque
 		mainProgram.videoFrame.setContentPane(contentPane);
 		mainProgram.videoFrame.pack();
-		mainProgram.videoFrame.setLocation(100, 20);
+		mainProgram.videoFrame.setLocation(100, 200);
 		mainProgram.videoFrame.setVisible(true);		
-
+		
+		
 		
 		/*Implement slider*/
 		/*		
