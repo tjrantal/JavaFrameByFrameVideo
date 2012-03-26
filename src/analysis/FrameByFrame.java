@@ -38,6 +38,7 @@ import javax.media.util.*;
 import javax.swing.SwingUtilities;		//SwingUtilities.root()
 import javax.swing.JFrame;
 import javax.swing.JSlider;		//Slider
+import javax.swing.JPanel;		//GUI komennot swing
 import javax.swing.DefaultBoundedRangeModel;
 import java.net.URL;
 import net.sourceforge.jffmpeg.*;	//jffmpeg decoders
@@ -46,6 +47,7 @@ import com.sun.media.codec.video.cinepak.*;
 import com.sun.media.*; //BasicSourceModule for getting a demuxer and SimpleGraphBuilder to get a codec
 import mjpeg.*;
 import ui.*;
+import DrawImage.*;
 import javax.media.Time;	//For rewinding the video..
 public class FrameByFrame implements ControllerListener
 {
@@ -205,13 +207,37 @@ public class FrameByFrame implements ControllerListener
 		//for (int framesExtracted = 0; framesExtracted<10; ++framesExtracted){
 		writer = null;
 		
+		/*Add JFRAME for image and slider...*/
+		mainProgram.videoFrame = new JFrame("Video");
+		mainProgram.videoFrame.addWindowListener(mainProgram);
+		mainProgram.videoFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		JPanel contentPane = new JPanel();
+		/*ADD DrawImage*/
+		mainProgram.drawImage = new DrawImage();
+		mainProgram.drawImage.setBackground(new Color(0, 0, 0));
+		mainProgram.drawImage.setPreferredSize(new Dimension(videoSize.width, videoSize.height));
+		mainProgram.drawImage.setOpaque(true);
+		mainProgram.drawImage.addMouseListener(mainProgram);
+		contentPane.add(mainProgram.drawImage);
+		/*Add Slider*/
+		mainProgram.slider = new JSlider(JSlider.HORIZONTAL,0, frameCount-1, 0);
+		mainProgram.slider.addChangeListener(mainProgram);
+		contentPane.add(mainProgram.slider);
+		contentPane.setOpaque(true); //content panes must be opaque
+		mainProgram.videoFrame.setContentPane(contentPane);
+		mainProgram.videoFrame.pack();
+		mainProgram.videoFrame.setLocation(100, 20);
+		mainProgram.videoFrame.setVisible(true);		
+
+		
 		/*Implement slider*/
+		/*		
 		mainProgram.slider.setModel(new DefaultBoundedRangeModel(0,0,0,frameCount-1));
 		mainProgram.drawImage.setPreferredSize(videoSize);
 		mainProgram.setPreferredSize(new Dimension(videoSize.width, videoSize.height+300));
-		((JFrame) SwingUtilities.getRoot(mainProgram)).pack();	/*Resize the window*/
+		((JFrame) SwingUtilities.getRoot(mainProgram)).pack();	//Resize the window/
 		((JFrame) SwingUtilities.getRoot(mainProgram)).setSize(videoSize.width, videoSize.height+300);
-
+		*/
 		/*Saving mPNG*/
 		try{
 			//writer = new MpngWriter(amTVstring,videoSize); 

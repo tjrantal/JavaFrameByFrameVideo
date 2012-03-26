@@ -46,7 +46,7 @@ import java.net.URL;
 
 /*implements AL antaa mahdollisuuden kayttaa eventtteja koneelta. Kayttis toteuttaa...*/
 /*extends = inherit, voi peria vain yhden*/
-public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeListener, MouseListener {	
+public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeListener, MouseListener,WindowListener {	
 	public JButton videoToOpen;
 	public JButton fileToOpen;
 	public JButton calibrationFile;
@@ -56,11 +56,17 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 	public JLabel status;
 	public JPanel sliderPane;
 	public JTextArea textArea;
+	
 	public JSlider slider;
 	public File selectedFile;
 	public File videoFile;
 	public String savePath;
 	public String initPath;
+	
+	public JFrame videoFrame;	//Frame for video
+	//public JFrame calibrationFrame;
+	public JFrame pointFrame;	//Frame for digitized points
+	public JTextArea pointTextArea;
 	
 	public Vector<String[]> calibrations;
 	public int pointsDigitized;
@@ -136,6 +142,7 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 		
 		
 		/*ADD DrawImage*/
+		/*
 		width = 100;
 		height = 100;
 		 drawImage = new DrawImage();
@@ -144,18 +151,19 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 		drawImage.setOpaque(true);
 		drawImage.addMouseListener(this);
 		add(drawImage);
-		
+		*/
 		/*Add JTextArea*/
 		textArea = new JTextArea();
 		textArea.setPreferredSize(new Dimension(400,100));
 		add(textArea);
 		/*Add Slider*/
+		/*
 		slider = new JSlider(JSlider.HORIZONTAL,0, 0, 0);
 		slider.addChangeListener(this);
 		add(slider);
-			
+		*/			
 	}
-	
+
 	public static void initAndShowGU(){
 		JFrame frame = new JFrame("JavaVideoAnalysis");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -186,6 +194,27 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 			}
 		}
 	}
+	
+	/*WindowListener*/
+	public void 	windowActivated(WindowEvent e){
+		//System.out.println("Activated");
+	}
+	public void 	windowClosed(WindowEvent e){
+		//System.out.println("Closed");
+	}
+	/*If window is closed, close associated classes*/
+	public void 	windowClosing(WindowEvent e){
+		//System.out.println("Closing");
+		if (analysisThread != null){
+			if (analysisThread.frameByFrame != null){
+				closeFrameByFame();
+			}
+		}		
+	}
+	public void 	windowDeactivated(WindowEvent e){}
+	public void 	windowDeiconified(WindowEvent e){}
+	public void 	windowIconified(WindowEvent e){}
+    public void 	windowOpened(WindowEvent e){}
 	
 	/*MouseListener*/
 	public void mouseClicked(MouseEvent me) {
@@ -365,6 +394,12 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 		}
 		//closeFile
 		if ("closeFile".equals(e.getActionCommand())) {
+			WindowEvent wev = new WindowEvent(this.videoFrame, WindowEvent.WINDOW_CLOSING);
+			Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(wev);
+		}
+	}
+	
+	private void closeFrameByFame(){
 			videoToOpen.setEnabled(true);
 			//openFile.setEnabled(true);
 			try{
@@ -377,9 +412,6 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 				dlt2d = null;
 				System.gc();	//Try to enforce carbage collection
 			}catch (Exception err){System.out.println("Failed analysis thread"+err);}
-		
-
-		}
 	}
 	
 	private void writeCalibrationFile(CSVReader calibrationData){

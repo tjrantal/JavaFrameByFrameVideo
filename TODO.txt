@@ -1,5 +1,4 @@
-Save digitized points and associated frame, print to a text file.
-Allow saving digitized results as well as DLT calibration.
+Print calibration and digitized results into a text file.
 
-
-Try creating several frames -> clean up GUI look. Check whether the video fits into the screen. If not, scale down?
+Try creating several frames -> clean up GUI look.
+Check whether the video fits into the screen. If not, scale down?
