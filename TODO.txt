@@ -1,3 +1,2 @@
-Print calibration and digitized results into a text file. Perhaps just writing the Strings from JTextAreas suffices (already tab separated format..).
-
 Check whether the video fits into the screen. If not, scale down?
+3D analysis (I am not going to do it anytime soon, perhaps ever).
