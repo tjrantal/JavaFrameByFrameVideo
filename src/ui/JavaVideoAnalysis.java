@@ -235,10 +235,12 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 							System.out.println("screen(X,Y) = " + lastCoordinates[0] + "," + lastCoordinates[1]);
 						} else {
 							double[] digitizedPoint = {(double) lastCoordinates[0], (double) lastCoordinates[1]};
+							
 							Matrix coordinates = dlt2d.scaleCoordinates(digitizedPoint);
+							double[][] scaledPoint = coordinates.getArray();
 							System.out.println("screen(X,Y) = " + lastCoordinates[0] + "," + lastCoordinates[1] +" calibratred = "+coordinates.get(0,0) +","+coordinates.get(1,0));
 							//Add the
-							digitizedPoints.addPoint((double) lastCoordinates[0], (double) lastCoordinates[1],digitizedPoint, currentVideoFrame[0]);
+							digitizedPoints.addPoint(digitizedPoint,scaledPoint, currentVideoFrame[0]);
 							pointFrame.writeDigitizedPoints(digitizedPoints);							
 							//Go to next frame
 							currentVideoFrame = analysisThread.frameByFrame.readFrame();
@@ -267,8 +269,8 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 				digitizedPoints[r][c] = (double) digitizedCalibration[r][c];
 			}
 		}
+
 		digitizedCalibration = null;
-		
 		dlt2d = new DLT2D(global,digitizedPoints);
 		/*Print coefficients...*/
 		Matrix coeffs = dlt2d.getCurrentDltCoefficients();
@@ -284,6 +286,8 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 		pointFrame.pack();
 		pointFrame.setLocation(10, 600);
 		pointFrame.setVisible(true);	
+		
+		
 	}
 	
 	/*ActionListener*/

@@ -34,10 +34,34 @@ public class Point implements Comparable<Point>{
 		this.frameNo = frameNo;
 	}
 	
+	public Point(double[] digitizedPoint, int frameNo){
+		this.x = digitizedPoint[0];
+		this.y = digitizedPoint[1];
+		this.frameNo = frameNo;
+	}
+	
 	public Point(double x,double y, double[] scaledPoints, int frameNo){
 		this.x = x;
 		this.y = y;
 		this.scaledPoints = (double[]) scaledPoints.clone();
+		this.frameNo = frameNo;
+	}
+
+	public Point(double[] digitizedPoint, double[] scaledPoints, int frameNo){
+		this.x = digitizedPoint[0];
+		this.y = digitizedPoint[1];
+		this.scaledPoints = (double[]) scaledPoints.clone();
+		this.frameNo = frameNo;
+	}
+	
+	public Point(double[] digitizedPoint, double[][] scaledPoints, int frameNo){
+		this.x = digitizedPoint[0];
+		this.y = digitizedPoint[1];
+		double[] temp = new double[scaledPoints.length];
+		for (int i =0;i<scaledPoints.length;++i){
+			temp[i] = scaledPoints[i][0];
+		}
+		this.scaledPoints = (double[]) temp.clone();
 		this.frameNo = frameNo;
 	}
 	

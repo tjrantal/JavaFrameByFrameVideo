@@ -29,38 +29,55 @@ public class DigitizedPoints{
 	public DigitizedPoints(){
 		points = new Vector<Point>();
 	}
-	public void addPoint(double x, double y, int frameNo){
+	public void addPoint(double[] digitized, int frameNo){
 		/*Check whether the frame has already been digitized 
 			or if frame after this one has been digitized.
 			Keeps the frames in order...*/
 		for (int i = 0; i< points.size();++i){
 			if (points.get(i).frameNo == frameNo){
-				points.set(i, new Point(x,y,frameNo));				
+				points.set(i, new Point(digitized,frameNo));				
 				return;
 			}
 			if (points.get(i).frameNo > frameNo){
-				points.add(i, new Point(x,y,frameNo));	//Insert into			
+				points.add(i, new Point(digitized,frameNo));	//Insert into			
 				return;
 			}
 		}
-		points.add(new Point(x,y,frameNo));	//If we get to here, it is the last frame digitized -> just add
+		points.add(new Point(digitized,frameNo));	//If we get to here, it is the last frame digitized -> just add
 	}
 	
-		public void addPoint(double x, double y,double[] scaledPoints, int frameNo){
+	public void addPoint(double[] digitized,double[][] scaledPoints, int frameNo){
 		/*Check whether the frame has already been digitized 
 			or if frame after this one has been digitized.
 			Keeps the frames in order...*/
 		for (int i = 0; i< points.size();++i){
 			if (points.get(i).frameNo == frameNo){
-				points.set(i, new Point(x,y,scaledPoints,frameNo));				
+				points.set(i, new Point(digitized,scaledPoints,frameNo));				
 				return;
 			}
 			if (points.get(i).frameNo > frameNo){
-				points.add(i, new Point(x,y,scaledPoints,frameNo));	//Insert into			
+				points.add(i, new Point(digitized,scaledPoints,frameNo));	//Insert into			
 				return;
 			}
 		}
-		points.add(new Point(x,y,scaledPoints,frameNo));	//If we get to here, it is the last frame digitized -> just add
+		points.add(new Point(digitized,scaledPoints,frameNo));	//If we get to here, it is the last frame digitized -> just add
 	}
 	
+	public void addPoint(double[] digitized,double[] scaledPoints, int frameNo){
+		/*Check whether the frame has already been digitized 
+			or if frame after this one has been digitized.
+			Keeps the frames in order...*/
+		for (int i = 0; i< points.size();++i){
+			if (points.get(i).frameNo == frameNo){
+				points.set(i, new Point(digitized,scaledPoints,frameNo));				
+				return;
+			}
+			if (points.get(i).frameNo > frameNo){
+				points.add(i, new Point(digitized,scaledPoints,frameNo));	//Insert into			
+				return;
+			}
+		}
+		points.add(new Point(digitized,scaledPoints,frameNo));	//If we get to here, it is the last frame digitized -> just add
+	}
+
 }
