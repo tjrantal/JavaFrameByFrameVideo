@@ -3,7 +3,7 @@ if "%JAVA_HOME%" == "" GOTO NOPATH
 if "%ANT_HOME%" == "" GOTO NOPATH
 @echo paths already set
 GOTO YESPATH
-NOPATH:
+:NOPATH
 set JAVA_HOME=C:\Program Files\Java\jdk1.6.0_25
 set ANT_HOME=D:\UserData\ratimo\Oma\ohjelmat\apache-ant-1.8.3
 set PATH=.;%ANT_HOME%\bin;%PATH%

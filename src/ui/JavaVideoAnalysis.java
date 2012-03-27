@@ -55,7 +55,7 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 	public JTextField lowPass;
 	public JLabel status;
 	public JPanel sliderPane;
-	public JTextArea textArea;
+	
 	
 	public JSlider slider;
 	public File selectedFile;
@@ -65,16 +65,18 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 	
 	public JFrame videoFrame;	//Frame for video
 	//public JFrame calibrationFrame;
-	public JFrame pointFrame;	//Frame for digitized points
+	public SaveableFrame pointFrame;	//Frame for digitized points
 	public JTextArea pointTextArea;
+	
+	public SaveableFrame calibrationFrame;	//Frame for digitized points
+	public JTextArea calibrationTextArea;
 	
 	public Vector<String[]> calibrations;
 	public int pointsDigitized;
-	private int[][] digitizedCalibration;
+	public int[][] digitizedCalibration;
 	public AnalysisThread analysisThread;
 	public int[] currentVideoFrame = null;
 	public DrawImage drawImage;
-	private CSVReader calibrationData;
 	public DLT2D dlt2d = null;
 	public int width;
 	public int height;
@@ -140,28 +142,6 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 		buttons.add(status);
 		add(buttons);
 		
-		
-		/*ADD DrawImage*/
-		/*
-		width = 100;
-		height = 100;
-		 drawImage = new DrawImage();
-		drawImage.setBackground(new Color(0, 0, 0));
-		drawImage.setPreferredSize(new Dimension(width,height));
-		drawImage.setOpaque(true);
-		drawImage.addMouseListener(this);
-		add(drawImage);
-		*/
-		/*Add JTextArea*/
-		textArea = new JTextArea();
-		textArea.setPreferredSize(new Dimension(400,100));
-		add(textArea);
-		/*Add Slider*/
-		/*
-		slider = new JSlider(JSlider.HORIZONTAL,0, 0, 0);
-		slider.addChangeListener(this);
-		add(slider);
-		*/			
 	}
 
 	public static void initAndShowGU(){
@@ -240,58 +220,14 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 						System.out.println("adding calibrated point");
 						for (int i = 0;i<2;++i){
 							digitizedCalibration[pointsDigitized][i] = lastCoordinates[i];
-							calibrationData.data.get(pointsDigitized+1).add(Integer.toString(lastCoordinates[i]));
+							calibrationFrame.data.get(pointsDigitized+1).add(Integer.toString(lastCoordinates[i]));
 						}
 						++pointsDigitized;
-						writeCalibrationFile(calibrationData);
-						if (pointsDigitized <calibrationData.data.size()-1){
-							status.setText(new String("Digitize "+calibrationData.data.get(pointsDigitized+1).get(0)));
+						calibrationFrame.writeCalibrationFile();
+						if (pointsDigitized <calibrationFrame.data.size()-1){
+							status.setText(new String("Digitize "+calibrationFrame.data.get(pointsDigitized+1).get(0)));
 						}else{
-							/*Get the DLT coefficients and store calibration in dlt2d*/
-							dlt2d = null;	//Get rid of existing calibration
-							double[][] global = new  double[calibrationData.data.size()-1][2];  //Global coordinates of the calibration object
-							double[][] digitizedPoints = new double[calibrationData.data.size()-1][2];
-							/*Copy the calibration object*/
-							//System.out.println("R size "+ calibrationData.data.size()+" C size "+ calibrationData.data.get(1).size());
-							for (int r = 0; r< calibrationData.data.size()-1;++r){
-								for (int c = 0; c<2;++c){
-									System.out.println(calibrationData.data.get(r+1).get(c+1));
-									global[r][c] = Double.parseDouble(calibrationData.data.get(r+1).get(c+1));
-								}
-							}
-							/*Copy the calibration points*/
-							for (int r = 0; r< digitizedPoints.length;++r){
-								for (int c = 0; c< digitizedPoints[r].length;++c){
-									digitizedPoints[r][c] = (double) digitizedCalibration[r][c];
-								}
-							}
-							
-							dlt2d = new DLT2D(global,digitizedPoints);
-							/*Print coefficients...*/
-							Matrix coeffs = dlt2d.getCurrentDltCoefficients();
-							calibrationData.data.add(new Vector<String>());	//Add new row for DLT-coefficients
-							calibrationData.data.lastElement().add("2D DLT");
-							String resultString = "Coefficients\n";
-							for (int i = 0; i< coeffs.getRowDimension();++i){
-								calibrationData.data.lastElement().add(Double.toString(coeffs.get(i,0)));
-							}
-							writeCalibrationFile(calibrationData);
-							
-							digitizedCalibration = null;
-							status.setText(new String("Obtained 2D DLT coefficients"));
-							/*Create text pane for coordinates*/
-							pointFrame = new JFrame();
-							pointFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-							pointTextArea = new JTextArea();
-							pointTextArea.setEditable(false);
-							//pointTextArea.setPreferredSize(new Dimension(400,200));
-							JScrollPane scrollPane = new JScrollPane(pointTextArea); 
-							scrollPane.setOpaque(true);
-							pointFrame.setContentPane(scrollPane);
-							pointFrame.pack();
-							pointFrame.setLocation(10, 600);
-							pointFrame.setVisible(true);	
-							
+							calculateCoefficients();
 						}
 						/*Draw x and y -coordinate?*/
 					}else{
@@ -303,7 +239,7 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 							System.out.println("screen(X,Y) = " + lastCoordinates[0] + "," + lastCoordinates[1] +" calibratred = "+coordinates.get(0,0) +","+coordinates.get(1,0));
 							//Add the
 							digitizedPoints.addPoint((double) lastCoordinates[0], (double) lastCoordinates[1],digitizedPoint, currentVideoFrame[0]);
-							writeDigitizedPoints(digitizedPoints);							
+							pointFrame.writeDigitizedPoints(digitizedPoints);							
 							//Go to next frame
 							currentVideoFrame = analysisThread.frameByFrame.readFrame();
 						}
@@ -313,6 +249,43 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 		}
 	}
 
+	public void calculateCoefficients(){
+		/*Get the DLT coefficients and store calibration in dlt2d*/
+		dlt2d = null;	//Get rid of existing calibration
+		double[][] global = new  double[calibrationFrame.data.size()-1][2];  //Global coordinates of the calibration object
+		double[][] digitizedPoints = new double[calibrationFrame.data.size()-1][2];
+		/*Copy the calibration object*/
+		for (int r = 0; r< calibrationFrame.data.size()-1;++r){
+			for (int c = 0; c<2;++c){
+				System.out.println(calibrationFrame.data.get(r+1).get(c+1));
+				global[r][c] = Double.parseDouble(calibrationFrame.data.get(r+1).get(c+1));
+			}
+		}
+		/*Copy the calibration points*/
+		for (int r = 0; r< digitizedPoints.length;++r){
+			for (int c = 0; c< digitizedPoints[r].length;++c){
+				digitizedPoints[r][c] = (double) digitizedCalibration[r][c];
+			}
+		}
+		digitizedCalibration = null;
+		
+		dlt2d = new DLT2D(global,digitizedPoints);
+		/*Print coefficients...*/
+		Matrix coeffs = dlt2d.getCurrentDltCoefficients();
+		String resultString = "Coefficients\n";
+		for (int i = 0; i< coeffs.getRowDimension();++i){
+			resultString += "\tCoeff "+i+": "+Double.toString(coeffs.get(i,0))+"\n";
+		}
+		System.out.println(resultString);		
+		status.setText(new String("2D DLT coefficients"));
+		/*Create text pane for coordinates*/
+		pointFrame = new SaveableFrame(this);
+		pointFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		pointFrame.pack();
+		pointFrame.setLocation(10, 600);
+		pointFrame.setVisible(true);	
+	}
+	
 	/*ActionListener*/
 	public void actionPerformed(ActionEvent e) {
 		if ("videoFile".equals(e.getActionCommand())){
@@ -348,36 +321,12 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 		}	
 		
 		if ("calibrate".equals(e.getActionCommand())){
-			JFileChooser chooser = new JFileChooser(initPath);
-			chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-			int returnVal = chooser.showOpenDialog(this);
-			if(returnVal == JFileChooser.APPROVE_OPTION) {
-				File calibFile = chooser.getSelectedFile();
-				System.out.println("CSV read");
-				calibrationData = null;		//Remove any previous calibration
-				calibrationData = new CSVReader(calibFile,",");
-				
-				/*TODO read calibration object here.
-				If calibrationData.data.size()
-				== 3, 2D calibration object
-				== 4, 3D calibration object
-				== 5, 2D calibration object and digitized points
-				== 6, 3D calibration object and digitized points
-				*/
-				
-				status.setText(new String("Calibration chosen"));
-				/*Add calibration to a JTextArea*/
-				/*Fill the textArea with calibration data*/
-				System.out.println("Adding DX DY");
-				calibrationData.data.get(0).add("DX");
-				calibrationData.data.get(0).add("DY");
-				System.out.println("Writing data");
-				writeCalibrationFile(calibrationData);
-				pointsDigitized = 0;
-				digitizedCalibration = new int[calibrationData.data.size()-1][2];	//First row is headers...
-				System.out.println("Set status");
-				status.setText(new String("Digitize "+calibrationData.data.get(pointsDigitized+1).get(0)));
-			}
+			calibrationFrame = new SaveableFrame(this);
+			calibrationFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+			calibrationFrame.pack();
+			calibrationFrame.setLocation(600, 600);
+			calibrationFrame.setVisible(true);	
+			calibrationFrame.callLoad();
 		}
 		
 
@@ -413,6 +362,10 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 			/*Close the digitized points window as well*/
 			wev = new WindowEvent(this.pointFrame, WindowEvent.WINDOW_CLOSING);
 			Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(wev);
+			
+			/*Close the calibration window also*/
+			wev = new WindowEvent(this.calibrationFrame, WindowEvent.WINDOW_CLOSING);
+			Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(wev);
 		}
 	}
 	
@@ -430,37 +383,6 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 				System.gc();	//Try to enforce carbage collection
 			}catch (Exception err){System.out.println("Failed analysis thread"+err);}
 	}
-	
-	private void writeCalibrationFile(CSVReader calibrationData){
-		textArea.setText("");	//Empty the text prior to adding the latest results...
-		for (int r = 0;r<calibrationData.data.size();++r){
-			String tempText = "";
-			for (int c = 0;c<calibrationData.data.get(r).size();++c){
-				tempText+=calibrationData.data.get(r).get(c);
-				if (c <calibrationData.data.size()-1){tempText+="\t";}
-			}
-			tempText+="\n";
-			textArea.append(tempText);
-		}
-	}
-	
-	private void writeDigitizedPoints(DigitizedPoints digitizedPoints){
-		pointTextArea.setText("");	//Empty the text prior to adding the latest results...
-		pointTextArea.append("Frame#\tX\tY\tScaledX\tScaledY\n");
-		for (int r = 0;r<digitizedPoints.points.size();++r){
-			String tempText = "";
-			tempText+=digitizedPoints.points.get(r).frameNo+"\t";
-			tempText+=digitizedPoints.points.get(r).x+"\t";
-			tempText+=digitizedPoints.points.get(r).y+"\t";
-			for (int c = 0;c<digitizedPoints.points.get(r).scaledPoints.length;++c){
-				tempText+=digitizedPoints.points.get(r).scaledPoints[c];
-				if (c <digitizedPoints.points.get(r).scaledPoints.length-1){tempText+="\t";}
-			}
-			tempText+="\n";
-			pointTextArea.append(tempText);
-		}
-	}
-		
 	
 	public static void main(String[] args){
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
