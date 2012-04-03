@@ -1,2 +1,3 @@
+Mark the digitized point on the image (in 3D also the back projected?)
 Check whether the video fits into the screen. If not, scale down?
 3D analysis (I am not going to do it anytime soon, perhaps ever).
