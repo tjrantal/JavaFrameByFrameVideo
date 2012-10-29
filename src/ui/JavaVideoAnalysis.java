@@ -352,25 +352,36 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 		if ("autoTrack".equals(e.getActionCommand())){
 			autotrack = true;
 			trackMarker.setEnabled(false);
-			/*Attempt auto tracking...*/
-			double[] digitizedPoint = {(double) lastCoordinates[0], (double) lastCoordinates[1]};
 			/*Get template to track*/
-			int[][] template = new int[21][21];
+			double[][] template = new double[21][21];
 			int width = analysisThread.frameByFrame.videoSize.width;
 			int height = analysisThread.frameByFrame.videoSize.height;
 			for (int h = 0;h<21;++h){
 				for (int w = 0;w<21;++w){
-					template[w][h] = analysisThread.frameByFrame.frameData[(w-10+lastCoordinates[0])+(h-10+lastCoordinates[1])*width];
+					template[w][h] = (double) analysisThread.frameByFrame.frameData[(w-10+lastCoordinates[0])+(h-10+lastCoordinates[1])*width];
 				}
 			}
 			/*Autotrack until match is not found or run out of video*/
 			while (autotrack && currentVideoFrame[0] < analysisThread.frameByFrame.frameCount){
-				/*cross correlate with surrounding 20 pixels*/
-				for (int h = 0;h<21;++h){
-					for (int w = 0;w<21;++w){
-						//template[w][h] = analysisThread.frameByFrame.frameData[(w-10+lastCoordinates[0])+(h-10+lastCoordinates[1])*analysisThread.frameByFrame.videoSize.width];
+				/*cross correlate with image*/
+				double[][] sliceData = new double[width][height];
+				for (int h = 0;h<height;++h){
+					for (int w = 0;w<width;++w){
+						sliceData[w][h] = (double) analysisThread.frameByFrame.frameData[w+h*width];
 					}
 				}
+				double[][] xcorr= Filters.xcorr(sliceData,template);
+				/*Set areas not of interest to -10*/
+				for (int i = 0; i<xcorr.length; ++i){
+					for (int j = 0; j<xcorr[i].length; ++j){
+							if (i < lastCoordinates[0]-10 || i > lastCoordinates[0]+10 || j < lastCoordinates[1]-10 || j > lastCoordinates[1]+10){
+								xcorr[i][j] = -1;
+							}
+					}
+				}
+				/*Best guess*/
+				Max max = Filters.getMax(xcorr);
+				double[] digitizedPoint = {(double) max.indices[0], (double) max.indices[1]};
 				Matrix coordinates = dlt2d.scaleCoordinates(digitizedPoint);
 				double[][] scaledPoint = coordinates.getArray();
 				System.out.println("screen(X,Y) = " + lastCoordinates[0] + "," + lastCoordinates[1] +" calibrated = "+coordinates.get(0,0) +","+coordinates.get(1,0));
