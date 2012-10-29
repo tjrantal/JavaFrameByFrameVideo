@@ -52,6 +52,7 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 	public JButton calibrationFile;
 	public JButton openFile;
 	public JButton closeFile;
+	public JButton trackMarker;
 	public JTextField lowPass;
 	public JLabel status;
 	public JPanel sliderPane;
@@ -83,11 +84,15 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 	public int[] lastCoordinates = null;
 	public DigitizedPoints digitizedPoints = null;
 	private Thread anaThread;
+	
+	public boolean autotrack;
+	
 	public JavaVideoAnalysis(){
 		videoFile = null;
 		savePath = null;
 		pointsDigitized = 0;
 		digitizedCalibration = null;
+		autotrack = false;
 		/*Preset path*/
 		String videoSourceString =new String("");
 		String videoSavePath = new String("");
@@ -105,7 +110,7 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 		}
 		/*Add buttons and textfield...*/
 		JPanel buttons = new JPanel();
-		buttons.setLayout(new GridLayout(4,2,5,5));	/*Set button layout...*/
+		buttons.setLayout(new GridLayout(5,2,5,5));	/*Set button layout...*/
 		videoToOpen= new JButton("Video file to Open");
 		videoToOpen.setMnemonic(KeyEvent.VK_C);
 		videoToOpen.setActionCommand("videoFile");
@@ -129,7 +134,16 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 		calibrationFile.setToolTipText("Press to select calibration object file.");
 		buttons.add(new JLabel(new String("Select calibration object")));
 		buttons.add(calibrationFile);
-
+		
+		trackMarker= new JButton("AutoTrack");
+		trackMarker.setMnemonic(KeyEvent.VK_T);
+		trackMarker.setActionCommand("autoTrack");
+		trackMarker.addActionListener(this);
+		trackMarker.setToolTipText("Press to autoTrack marker.");
+		trackMarker.setEnabled(false);	//Disable for now
+		buttons.add(new JLabel(new String("Autotrack Marker")));
+		buttons.add(trackMarker);
+		
 		closeFile = new JButton("CloseVideo");
 		closeFile.setMnemonic(KeyEvent.VK_S);
 		closeFile.setActionCommand("closeFile");
@@ -215,7 +229,7 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 					lastCoordinates[0] = me.getX();
 					lastCoordinates[1] = me.getY();
 					
-					
+					trackMarker.setEnabled(true);
 					if (digitizedCalibration != null){ //Next clicks after initializing calibration will be calibration
 						System.out.println("adding calibrated point");
 						for (int i = 0;i<2;++i){
@@ -332,9 +346,14 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 			calibrationFrame.setVisible(true);	
 			calibrationFrame.callLoad();
 		}
-		
 
-		
+		/*Try to autotrack marker*/
+		if ("autoTrack".equals(e.getActionCommand())){
+			autotrack = true;
+			trackMarker.setEnabled(false);
+			/*Attempt auto tracking...*/
+			
+		}
 		
 		if ("openFile".equals(e.getActionCommand())) {
 			videoToOpen.setEnabled(false);
