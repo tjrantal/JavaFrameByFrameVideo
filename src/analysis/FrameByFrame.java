@@ -63,7 +63,7 @@ public class FrameByFrame implements ControllerListener
 	private Codec decoder;
 	private Buffer buffer;
 	private Buffer oBuf;
-	private Dimension videoSize;
+	public Dimension videoSize;
 	
 	/*Public vars*/
 	public float frameRate;

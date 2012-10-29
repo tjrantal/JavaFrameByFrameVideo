@@ -42,6 +42,7 @@ import ui.*;			//AnalysisThread
 import DrawImage.*;			//AnalysisThread
 import dlt.*;		//Direct linear transformation
 import Jama.*;		//Jama Matrix
+import utils.*;		//XCorrelation
 import java.net.URL;
 
 /*implements AL antaa mahdollisuuden kayttaa eventtteja koneelta. Kayttis toteuttaa...*/
@@ -252,7 +253,7 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 							
 							Matrix coordinates = dlt2d.scaleCoordinates(digitizedPoint);
 							double[][] scaledPoint = coordinates.getArray();
-							System.out.println("screen(X,Y) = " + lastCoordinates[0] + "," + lastCoordinates[1] +" calibratred = "+coordinates.get(0,0) +","+coordinates.get(1,0));
+							System.out.println("screen(X,Y) = " + lastCoordinates[0] + "," + lastCoordinates[1] +" calibrated = "+coordinates.get(0,0) +","+coordinates.get(1,0));
 							//Add the
 							digitizedPoints.addPoint(digitizedPoint,scaledPoint, currentVideoFrame[0]);
 							pointFrame.writeDigitizedPoints(digitizedPoints);							
@@ -352,7 +353,33 @@ public class JavaVideoAnalysis extends JPanel implements ActionListener, ChangeL
 			autotrack = true;
 			trackMarker.setEnabled(false);
 			/*Attempt auto tracking...*/
-			
+			double[] digitizedPoint = {(double) lastCoordinates[0], (double) lastCoordinates[1]};
+			/*Get template to track*/
+			int[][] template = new int[21][21];
+			int width = analysisThread.frameByFrame.videoSize.width;
+			int height = analysisThread.frameByFrame.videoSize.height;
+			for (int h = 0;h<21;++h){
+				for (int w = 0;w<21;++w){
+					template[w][h] = analysisThread.frameByFrame.frameData[(w-10+lastCoordinates[0])+(h-10+lastCoordinates[1])*width];
+				}
+			}
+			/*Autotrack until match is not found or run out of video*/
+			while (autotrack && currentVideoFrame[0] < analysisThread.frameByFrame.frameCount){
+				/*cross correlate with surrounding 20 pixels*/
+				for (int h = 0;h<21;++h){
+					for (int w = 0;w<21;++w){
+						//template[w][h] = analysisThread.frameByFrame.frameData[(w-10+lastCoordinates[0])+(h-10+lastCoordinates[1])*analysisThread.frameByFrame.videoSize.width];
+					}
+				}
+				Matrix coordinates = dlt2d.scaleCoordinates(digitizedPoint);
+				double[][] scaledPoint = coordinates.getArray();
+				System.out.println("screen(X,Y) = " + lastCoordinates[0] + "," + lastCoordinates[1] +" calibrated = "+coordinates.get(0,0) +","+coordinates.get(1,0));
+				//Add the
+				digitizedPoints.addPoint(digitizedPoint,scaledPoint, currentVideoFrame[0]);
+				pointFrame.writeDigitizedPoints(digitizedPoints);							
+				//Go to next frame
+				currentVideoFrame = analysisThread.frameByFrame.readFrame();
+			}
 		}
 		
 		if ("openFile".equals(e.getActionCommand())) {
