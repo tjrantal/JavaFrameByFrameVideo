@@ -1,7 +1,8 @@
 package mjpeg;
 import java.io.*;								//Random access file writer
 import java.util.*;							//Vector
-import com.sun.image.codec.jpeg.*;	//jpegCodec
+import javax.imageio.ImageIO; //encodingJPEG
+//import com.sun.image.codec.jpeg.*;	//jpegCodec
 import com.keypoint.*;					//pngCodec
 import java.awt.image.BufferedImage;
 public class MjpegWriter{
@@ -188,11 +189,14 @@ public class MjpegWriter{
 		void write_JPEG(BufferedImage data) throws Exception
 		{
 			ByteArrayOutputStream outData = new ByteArrayOutputStream(); 
+			ImageIO.write(data, "jpeg", outData);
+			/*
 			JPEGImageEncoder encoder = JPEGCodec.createJPEGEncoder(outData);
 			JPEGEncodeParam param = encoder.getDefaultJPEGEncodeParam(data); 
 			param.setQuality((float) 0.9,false);
 			encoder.setJPEGEncodeParam(param);
 			encoder.encode(data);
+			*/
 			//Get the byte array next from the outData
 			byte[] compressedData = outData.toByteArray();
 			videoFile.write(compressedData);
